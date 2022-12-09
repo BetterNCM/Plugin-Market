@@ -15,10 +15,10 @@
 ```json
 {
     "manifest_version": 1, // manifest版本，必为 1
-    "name": "BetterNCMPlugin", // 插件名，不推荐有中文
-    "slug": "better-ncm-plugin", // 插件唯一识别名 (留空则根据插件名自动生成)
+    "name": "ExamplePlugin", // 插件名，不推荐有中文
+    "slug": "example-plugin", // 插件唯一识别名 (留空则根据插件名自动生成)
     "version": "0.1.0", // 插件版本，推荐使用语义化版本（https://semver.org/）
-    "author": "AuthorName", // 插件作者
+    "author": "Author", // 插件作者
     "description": "Description of the plugin", // 插件描述
     "betterncm_version": "^0.2.6", // 依赖的 BetterNCM 版本
     "preview": "preview.png", // 插件预览图
