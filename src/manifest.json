@@ -1,11 +1,12 @@
 {
     "manifest_version": 1,
-    "name": "BetterNCMPlugin",
+    "name": "PluginMarket(beta)",
     "version": "0.1.0",
+    "author": "BetterNCM",
     "injects": {
         "Main": [
             {
-                "file": "main_test.js"
+                "file": "main.js"
             }
         ]
     }
