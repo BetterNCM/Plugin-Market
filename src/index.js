@@ -235,7 +235,9 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">{this.props.plugin.description}</div>
 						<div>
-							{this.props.downloads > 0 && <span className="plugin-downloads"><Icon name="download" /><span>{this.props.downloads}</span></span>}
+							{this.props.downloads > 0 && <span className="plugin-downloads"><Icon name="download" /><span>{
+								this.props.downloads > 1000 ? `${((this.props.downloads) / 1000).toFixed(2)}k` : this.props.downloads
+							}</span></span>}
 
 							<span className="plugin-item-version">
 								{

@@ -20,7 +20,7 @@
         }
 
         height: var(--card-height);
-        background: #3a3a3a;
+        background: #1b1b1b;
         border-radius: var(--card-radius);
         /* border: #ffffff66 1px solid; */
         box-shadow: 0 15px 35px rgb(50 50 50 / 10%), 0 5px 15px rgb(0 0 0 / 7%);
@@ -28,7 +28,7 @@
         flex-direction: row;
         flex-wrap: nowrap;
         margin-bottom: 18px;
-
+        backdrop-filter: blur(10px);
         max-width: 1100px;
         overflow: hidden;
         /* padding: 20px 15px; */
@@ -45,7 +45,7 @@
     
         .plugin-item-body {
             transform: translateX(-10px);
-            background: #3a3a3a;
+            background: #1b1b1b;
             position: absolute;
             height: var(--card-height);
             left: var(--card-height);
