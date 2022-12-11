@@ -160,7 +160,7 @@
                     flex: 1;
                     overflow: hidden;
                 }
-                .plugin-downloads{
+                .plugin-item-meta{
                     svg {
                         width: 12px;
                         fill: rgba(255, 255, 255, 0.651);
@@ -168,7 +168,6 @@
                         line-height: 1px;
                         vertical-align: bottom;
                         margin-right: 2px;
-                        
                     }
                     span{
                         padding: 0 .2em;
@@ -182,22 +181,12 @@
                         opacity: 1;
                     }
 
-                    &::after{
+                    &:not(:last-child)::after{
                         content: "|";
                         margin-left: 5px;
                     }
                 }
                 .plugin-item-version {
-                    opacity: .6;
-                    svg {
-                        width: 16px;
-                        fill: #fff;
-                        display: inline-block;
-                        line-height: 1px;
-                        vertical-align: bottom;
-                        margin-right: 2px;
-                        opacity: .8;
-                    }
                     .new-version {
                         font-weight: bold;
                         color: #66ccff;

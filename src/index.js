@@ -2,6 +2,7 @@ import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
+import { formatNumber } from './utils';
 import FlipMove from 'react-flip-move';
 import './styles.scss'
 
@@ -270,15 +271,13 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">{this.props.plugin.description}</div>
 						<div>
-							{this.props.downloads > 0 && <span className="plugin-downloads"><Icon name="download" /><span>{
-								this.props.downloads > 1000 ? `${((this.props.downloads) / 1000).toFixed(2)}k` : this.props.downloads
-							}</span></span>}
+							{ this.props.downloads > 0 && <span className="plugin-item-meta plugin-downloads"><Icon name="download" /><span>{ formatNumber(this.props.downloads) }</span></span> }
 
-							<span className="plugin-item-version">
+							<span className="plugin-item-meta plugin-item-version">
 								{
 									this.state.hasUpdate ?
 										(<span><Icon name="has_update" /> {loadedPlugins[this.props.plugin.slug].manifest.version} → <span className='new-version'>{this.props.plugin.version}</span></span>) :
-										(<span>{this.props.plugin.version}</span>)
+										(<span><Icon name="tag" />{this.props.plugin.version}</span>)
 								}
 							</span>
 						</div>
