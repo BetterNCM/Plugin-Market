@@ -24,17 +24,18 @@
     "sass": "^1.52.3",
     "sass-loader": "^13.0.0",
     "style-loader": "^3.3.1",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.4",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1",
-    "ts-loader": "^9.4.2",
-    "typescript": "^4.9.4"
+    "webpack-dev-server": "^4.11.1"
   },
   "version": "1.0.0",
   "description": "My webpack project",
   "name": "my-webpack-project",
   "dependencies": {
-    "compare-versions": "^5.0.1"
-
+    "@formkit/auto-animate": "^1.0.0-beta.5",
+    "compare-versions": "^5.0.1",
+    "react-flip-move": "^3.0.5"
   }
 }

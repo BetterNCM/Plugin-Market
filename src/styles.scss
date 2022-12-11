@@ -1,3 +1,70 @@
+.plugin-market-filters {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-right: 7px;
+	margin-top: 10px;
+	margin-bottom: 15px;
+    .plugin-market-filter-sort {
+        display: flex;
+        align-items: center;
+        > button {
+            border: 1px solid #ffffff22;
+            background: transparent;
+            padding-left: 15px;
+            padding-right: 15px;
+            height: 30px;
+            transition: background .25s ease;
+            &:hover {
+                background: #ffffff11;
+            }
+            &.active {
+                background: #ec4141;
+            }
+            svg {
+                width: 18px;
+                fill: #ddd;
+            }
+            &:not(:last-child) {
+                border-right: none;
+            }
+            &:first-of-type {
+                border-radius: 6px 0 0 6px;
+            }
+            &:last-of-type {
+                border-radius: 0 6px 6px 0;
+            }
+        }
+        > svg {
+            margin-right: 10px;
+            opacity: .5;
+			width: 18px;
+			fill: #fff;
+        }
+    }
+    .plugin-market-filter-search {
+        display: flex;
+        align-items: center;
+        transform: translateX(-30px);
+        > input {
+            background: #1b1b1b;
+            border: 1px solid #ffffff22;
+            height: 35px;
+            padding-left: 40px;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        > svg {
+            transform: translateX(32px);
+            opacity: .3;
+			width: 18px;
+			fill: #fff;
+        }
+    }
+}
+
+
+
 .plugin-market-container {
     width: 100%;
     height: auto;

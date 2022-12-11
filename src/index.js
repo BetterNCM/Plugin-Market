@@ -2,6 +2,7 @@ import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
+import FlipMove from 'react-flip-move';
 import './styles.scss'
 
 
@@ -15,7 +16,8 @@ class PluginList extends React.Component {
 		this.state = {
 			onlinePlugins: null,
 			pluginsAnalyzeData: null,
-			requireReload: false
+			requireReload: false,
+			sort_by: 'downloads',
 		};
 		this.requireReload = this.requireReload.bind(this);
 	}
@@ -30,6 +32,7 @@ class PluginList extends React.Component {
 			requireReload: true
 		});
 	}
+	
 
 	render() {
 		if (!this.state.onlinePlugins) {
@@ -39,23 +42,56 @@ class PluginList extends React.Component {
 			</div>;
 		}
 		return (
-			<div className="plugin-market-container">
-				{
-					this.state.onlinePlugins
-						.filter(
-							plugin => {
-								if (plugin.hide) return false;
-								if (!plugin.betterncm_version) return true;
-								return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
-							}
-						)
-						.sort((a, b) => {
-							return a.name > b.name ? 1 : -1;
-						})
-						.map((plugin) => {
-							return <PluginItem downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count} plugin={plugin} requireReload={this.requireReload} />;
-						})
-				}
+			<div>
+				<div className="plugin-market-filters">
+					<div className="plugin-market-filter-search">
+						<Icon name="search"/>
+						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
+					</div>
+					<div className="plugin-market-filter-sort">
+						<Icon name="sort"/>
+						<button title="下载量" className={this.state.sort_by === 'downloads' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'downloads' })}><Icon name="download"/></button>
+						<button title="更新时间" className={this.state.sort_by === 'update' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'update' })}><Icon name="clock"/></button>
+						<button title="名称" className={this.state.sort_by === 'name' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'name' })}><Icon name="atoz"/></button>
+					</div>
+				</div>
+				<FlipMove className="plugin-market-container">
+					{
+						this.state.onlinePlugins
+							.filter(
+								plugin => {
+									if (plugin.hide) return false;
+									if (!plugin.betterncm_version) return true;
+									return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
+								}
+							)
+							.filter(
+								plugin => {
+									if (!this.state.search) return true;
+									const search = this.state.search.toLowerCase();
+									return plugin.name.toLowerCase().includes(search) ||
+										plugin.slug.toLowerCase().includes(search) ||
+										plugin.author.toLowerCase().includes(search);
+								}
+							)
+							.sort((a, b) => {
+								switch (this.state.sort_by) {
+									case 'downloads':
+										return (this.state.pluginsAnalyzeData?.find(v => v.name === b.slug)?.count ?? 0) - 
+											(this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0);
+									case 'name':
+										return a.name > b.name ? 1 : -1;
+									case 'update': 
+										return b.update_time - a.update_time;
+								}
+							})
+							.map((plugin) => {
+								return <div key={plugin.slug} className="plugin-item-wrapper">
+									<PluginItem key={plugin.slug} downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count} plugin={plugin} requireReload={this.requireReload} />
+								</div>;
+							})
+					}
+				</FlipMove>
 				{
 					this.state.requireReload ?
 						<div className="reload-notice">
@@ -67,7 +103,6 @@ class PluginList extends React.Component {
 						</div>
 						: null
 				}
-
 			</div>
 		);
 	}
