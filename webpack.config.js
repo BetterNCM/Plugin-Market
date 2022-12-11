@@ -29,6 +29,9 @@ const config = {
                 {
                     from: path.resolve(__dirname, "src", "manifest.json"),
                     to: path.resolve(__dirname, "manifest.json"),
+                },{
+                    from: path.resolve(__dirname, "src", "manifest_production.json"),
+                    to: path.resolve(__dirname, "dist", "manifest.json"),
                 },
             ]
         })
