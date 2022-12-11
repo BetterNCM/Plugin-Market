@@ -51,7 +51,7 @@ class PluginList extends React.Component {
 					</div>
 					<div className="plugin-market-filter-sort">
 						<Icon name="sort"/>
-						<button title="下载量" className={this.state.sort_by === 'downloads' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'downloads' })}><Icon name="download"/></button>
+						{this.state.pluginsAnalyzeData && <button title="下载量" className={this.state.sort_by === 'downloads' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'downloads' })}><Icon name="download"/></button>}
 						<button title="更新时间" className={this.state.sort_by === 'update' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'update' })}><Icon name="clock"/></button>
 						<button title="名称" className={this.state.sort_by === 'name' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'name' })}><Icon name="atoz"/></button>
 					</div>
