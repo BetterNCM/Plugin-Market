@@ -6,7 +6,7 @@
     "injects": {
         "Main": [
             {
-                "file": "main.js"
+                "file": "./dist/main.js"
             }
         ]
     }
