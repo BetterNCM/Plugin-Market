@@ -2,7 +2,7 @@
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const  copyWebpackPlugin= require("copy-webpack-plugin");
+const copyWebpackPlugin = require("copy-webpack-plugin");
 
 const isProduction = process.env.NODE_ENV == 'production';
 
@@ -14,7 +14,7 @@ const stylesHandler = 'style-loader';
 const config = {
     entry: './src/index.js',
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname),
     },
     devServer: {
         open: true,
@@ -27,10 +27,10 @@ const config = {
         new copyWebpackPlugin({
             patterns: [
                 {
-                  from: path.resolve(__dirname, "src", "manifest.json"),
-                  to: path.resolve(__dirname, "dist", "manifest.json"),
+                    from: path.resolve(__dirname, "src", "manifest.json"),
+                    to: path.resolve(__dirname, "manifest.json"),
                 },
-              ]
+            ]
         })
 
         // Add your plugins here
@@ -39,12 +39,17 @@ const config = {
     module: {
         rules: [
             {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
+            {
                 test: /\.(js|jsx)$/i,
                 loader: 'babel-loader',
             },
             {
                 test: /\.css$/i,
-                use: [stylesHandler,'css-loader'],
+                use: [stylesHandler, 'css-loader'],
             },
             {
                 test: /\.s[ac]ss$/i,
@@ -59,19 +64,22 @@ const config = {
             // Learn more about loaders from https://webpack.js.org/loaders/
         ],
     },
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js'],
+    },
 };
 
 module.exports = () => {
     if (isProduction) {
         config.mode = 'production';
-        
-        
+
+
     } else {
         config.mode = 'development';
     }
-    
+
     config.experiments = {
-      topLevelAwait: true
+        topLevelAwait: true
     };
     return config;
 };

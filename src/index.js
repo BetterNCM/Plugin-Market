@@ -1,62 +1,28 @@
 import { compareVersions, satisfies } from 'compare-versions';
+import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
+import { installPlugin, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
 import './styles.scss'
 
-const baseURL = "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
 
-const loadOnlinePlugins = async () => {
-	return await (await fetch(baseURL + "plugins.json?" + new Date().getTime())).json();
-}
+
 
 let currentBetterNCMVersion = await betterncm.app.getBetterNCMVersion();
-
-async function installPlugin(plugin, onlinePlugins) {
-	for (let requirement of (plugin.requirements ?? [])) {
-		if (loadedPlugins[requirement]) continue;
-
-		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
-		if (requiredPlugin) {
-			const result = await installPlugin(requiredPlugin);
-			if (result != "success") return result;
-		} else {
-			return `${plugin.name} 的依赖 ${requiredPlugin} 解析失败！插件将不会安装`;
-		}
-	}
-
-	await betterncm.fs.writeFile("./plugins/" + plugin.file, await (await fetch(baseURL + plugin['file-url'])).blob());
-
-	return "success";
-}
-async function deletePlugin(plugin) {
-	if (!loadedPlugins[plugin.slug]) {
-		if (await betterncm.fs.exists("./plugins/" + plugin.file)) {
-			await betterncm.fs.remove("./plugins/" + plugin.file);
-			return "success";
-		}
-		return "插件未安装";
-	}
-	let path = await betterncm.fs.readFileText(loadedPlugins[plugin.slug].pluginPath + "/.plugin.path.meta");
-	if (path) {
-		await betterncm.fs.remove(path);
-		return "success";
-	}
-	return "未找到插件路径，卸载失败";
-}
 
 class PluginList extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			onlinePlugins: null,
+			pluginsAnalyzeData: null,
 			requireReload: false
 		};
 		this.requireReload = this.requireReload.bind(this);
 	}
 
 	async componentDidMount() {
-		this.setState({
-			onlinePlugins: await loadOnlinePlugins()
-		});
+		loadOnlinePlugins().then(onlinePlugins => this.setState({ onlinePlugins }));
+		getPluginDownloads().then(pluginsAnalyzeData => this.setState({ pluginsAnalyzeData }));
 	}
 
 	requireReload() {
@@ -76,30 +42,30 @@ class PluginList extends React.Component {
 			<div className="plugin-market-container">
 				{
 					this.state.onlinePlugins
-					.filter(
-						plugin => {
-							if (plugin.hide) return false;
-							if (!plugin.betterncm_version) return true;
-							return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
-						}
-					)
-					.sort((a, b) => {
-						return a.name > b.name ? 1 : -1;
-					})
-					.map((plugin) => {
-						return <PluginItem plugin={plugin} requireReload={this.requireReload} />;
-					})
+						.filter(
+							plugin => {
+								if (plugin.hide) return false;
+								if (!plugin.betterncm_version) return true;
+								return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
+							}
+						)
+						.sort((a, b) => {
+							return a.name > b.name ? 1 : -1;
+						})
+						.map((plugin) => {
+							return <PluginItem downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count} plugin={plugin} requireReload={this.requireReload} />;
+						})
 				}
 				{
-					this.state.requireReload ? 
+					this.state.requireReload ?
 						<div className="reload-notice">
 							<div>插件的更改需要重载以生效</div>
-							<button onClick={ async () => {
+							<button onClick={async () => {
 								await betterncm.app.reloadPlugins();
-								document.location.reload();
+								betterncm.reload()
 							}}><Icon name="reload" /> 重载</button>
 						</div>
-					: null
+						: null
 				}
 
 			</div>
@@ -176,7 +142,7 @@ class PluginItem extends React.Component {
 		}
 	}
 
-	getActionbarColor () {
+	getActionbarColor() {
 		if (this.state.installed) {
 			if (this.state.hasUpdate) {
 				return '#66ccff';
@@ -187,7 +153,7 @@ class PluginItem extends React.Component {
 		}
 	}
 
-	getActionbarIconColor () {
+	getActionbarIconColor() {
 		if (this.state.installing || this.state.deleting) {
 			return '#000';
 		}
@@ -197,7 +163,7 @@ class PluginItem extends React.Component {
 		return '#3a3a3a';
 	}
 
-	getActionButtons () {
+	getActionButtons() {
 		let buttons = [];
 		if (this.state.installed) {
 			buttons.push(
@@ -254,29 +220,34 @@ class PluginItem extends React.Component {
 		}
 		return (
 			<div className={`plugin-item ${this.state.installing ? 'installing' : ''} ${this.state.deleting ? 'deleting' : ''}`}>
-				<div className="plugin-item-preview" style={{ 'backgroundImage': `url(${ preview })`}}></div>
+				<div className="plugin-item-preview" style={{ 'backgroundImage': `url(${preview})` }}></div>
 				<div className="plugin-item-body">
 					<div className="plugin-item-info">
 						<div className="plugin-item-title">{this.props.plugin.name}</div>
 						<div className="plugin-item-author">
 							{
 								authorLink ?
-								( <a onClick={ async () => {
-									    await betterncm.app.exec(authorLink)
-									}} target="_blank">{this.props.plugin.author}</a> ) :
-								( <span>{this.props.plugin.author}</span> )
+									(<a onClick={async () => {
+										await betterncm.app.exec(authorLink)
+									}} target="_blank">{this.props.plugin.author}</a>) :
+									(<span>{this.props.plugin.author}</span>)
 							}
 						</div>
 						<div className="plugin-item-description">{this.props.plugin.description}</div>
-						<div className="plugin-item-version">
-							{
-								this.state.hasUpdate ?
-								( <span><Icon name="has_update" /> { loadedPlugins[this.props.plugin.slug].manifest.version } → <span className='new-version'>{ this.props.plugin.version }</span></span> ) :
-								( <span>{ this.props.plugin.version }</span> )
-							}
+						<div>
+							{this.props.downloads > 0 && <span className="plugin-downloads"><Icon name="download" /><span>{this.props.downloads}</span></span>}
+
+							<span className="plugin-item-version">
+								{
+									this.state.hasUpdate ?
+										(<span><Icon name="has_update" /> {loadedPlugins[this.props.plugin.slug].manifest.version} → <span className='new-version'>{this.props.plugin.version}</span></span>) :
+										(<span>{this.props.plugin.version}</span>)
+								}
+							</span>
 						</div>
-						{ preview != "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${ preview })`}}></div> : null }
-					</div>	
+
+						{preview != "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${preview})` }}></div> : null}
+					</div>
 				</div>
 				<div className="plugin-item-actions" style={{ backgroundColor: this.getActionbarColor(), fill: this.getActionbarIconColor() }}>
 					{this.getActionButtons()}
@@ -290,6 +261,7 @@ class PluginItem extends React.Component {
 						) : null
 					}
 				</div>
+
 			</div>
 		)
 	}
