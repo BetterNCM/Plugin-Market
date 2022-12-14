@@ -21,9 +21,11 @@ class PluginList extends React.Component {
 			category: 'all',
 			search: '',
 			sort_by: 'downloads',
+			sort_order: 'desc'
 		};
 		this.requireReload = this.requireReload.bind(this);
 		this.setInstalled = this.setInstalled.bind(this);
+		this.setSortBy = this.setSortBy.bind(this);
 	}
 
 	async componentDidMount() {
@@ -49,6 +51,19 @@ class PluginList extends React.Component {
 			requireReload: true
 		});
 	}
+
+	setSortBy(sort_by) {
+		if (this.state.sort_by === sort_by) {
+			this.setState({
+				sort_order: (this.state.sort_order === 'asc' ? 'desc' : 'asc')
+			});
+		} else {
+			this.setState({
+				sort_by,
+				sort_order: sort_by === 'name' ? 'asc' : 'desc'
+			});
+		}
+	}
 	
 
 	render() {
@@ -67,14 +82,14 @@ class PluginList extends React.Component {
 						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
 						<button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>
 					</div>
-					<div className={ `plugin-market-filter-search ${ this.state.search ? "filled" : null}` }>
+					<div className={`plugin-market-filter-search ${ this.state.search ? 'filled' : ''}`}>
 						<Icon name="search"/>
 						<input placeholder="搜索..." onChange={ e => this.setState({ search: e.target.value })} />
 					</div>
 					<div className="plugin-market-filter-sort">
-						{this.state.pluginsAnalyzeData && <button title="下载量" className={this.state.sort_by === 'downloads' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'downloads' })}><Icon name="download"/></button>}
-						<button title="更新时间" className={this.state.sort_by === 'update' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'update' })}><Icon name="clock"/></button>
-						<button title="名称" className={this.state.sort_by === 'name' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'name' })}><Icon name="atoz"/></button>
+						{this.state.pluginsAnalyzeData && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download"/></button>}
+						<button title="更新时间" className={`${this.state.sort_by === 'update' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('update')}><Icon name="clock"/></button>
+						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz"/></button>
 					</div>
 				</div>
 				<FlipMove className="plugin-market-container">
@@ -104,15 +119,17 @@ class PluginList extends React.Component {
 								}
 							)
 							.sort((a, b) => {
-								switch (this.state.sort_by) {
-									case 'downloads':
-										return (this.state.pluginsAnalyzeData?.find(v => v.name === b.slug)?.count ?? 0) - 
-											(this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0);
-									case 'name':
-										return a.name > b.name ? 1 : -1;
-									case 'update': 
-										return b.update_time - a.update_time;
-								}
+								return (() => {
+									switch (this.state.sort_by) {
+										case 'downloads':
+											return (this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0) - 
+												(this.state.pluginsAnalyzeData?.find(v => v.name === b.slug)?.count ?? 0);
+										case 'name':
+											return a.name > b.name ? 1 : -1;
+										case 'update': 
+											return a.update_time - b.update_time;
+									}
+								})() * (this.state.sort_order === 'asc' ? 1 : -1)
 							})
 							.map((plugin) => {
 								return <div key={plugin.slug} className="plugin-item-wrapper">

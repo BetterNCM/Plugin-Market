@@ -47,6 +47,7 @@
             padding-left: 15px;
             padding-right: 15px;
             height: 30px;
+            position: relative;
             transition: background .25s ease;
             &:hover {
                 background: #ffffff11;
@@ -57,6 +58,10 @@
             svg {
                 width: 18px;
                 fill: #ddd;
+                transition: transform .25s ease;
+            }
+            &.active svg {
+                transform: translateX(-4px);
             }
             &:not(:last-child) {
                 border-right: none;
@@ -66,6 +71,22 @@
             }
             &:last-of-type {
                 border-radius: 0 6px 6px 0;
+            }
+
+            &::after{
+                content: '▼';
+                position: absolute;
+                right: 5px;
+                top: 8px;
+                opacity: 0;
+                transform: scaleY(0.7);
+                transition: all .25s ease;
+            }
+            &.active::after {
+                opacity: 1;
+            }
+            &.asc::after {
+                transform: scaleY(0.7) rotate(180deg);
             }
         }
         > svg {
