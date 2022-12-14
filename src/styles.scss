@@ -114,7 +114,7 @@
 
         .plugin-item-body {
             width: 100%;
-            transform: translateY(55%);
+            transform: translateY(calc(var(--card-height) - 65px));
             position: absolute;
             left: 0;
             right: 0;
