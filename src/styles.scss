@@ -132,7 +132,7 @@
                 background: linear-gradient(#0000,#08080899 20%);
             }
             height: var(--card-height);
-            transition: all 100ms ease;
+            transition: all var(--transition-duration) ease;
             border-radius: var(--card-radius);
             box-sizing: border-box;
             display: flex;
