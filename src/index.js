@@ -18,14 +18,30 @@ class PluginList extends React.Component {
 			onlinePlugins: null,
 			pluginsAnalyzeData: null,
 			requireReload: false,
+			category: 'all',
+			search: '',
 			sort_by: 'downloads',
 		};
 		this.requireReload = this.requireReload.bind(this);
+		this.setInstalled = this.setInstalled.bind(this);
 	}
 
 	async componentDidMount() {
-		loadOnlinePlugins().then(onlinePlugins => this.setState({ onlinePlugins }));
+		loadOnlinePlugins().then(
+			onlinePlugins => {
+				onlinePlugins = onlinePlugins.map(plugin => {
+					plugin.installed = !!loadedPlugins[plugin.slug];
+					return plugin;
+				});
+				this.setState({ onlinePlugins });
+			});
 		getPluginDownloads().then(pluginsAnalyzeData => this.setState({ pluginsAnalyzeData }));
+	}
+
+	setInstalled(slug, installed) {
+		let onlinePlugins = this.state.onlinePlugins;
+		onlinePlugins.find(plugin => plugin.slug === slug).installed = installed;
+		this.setState({ onlinePlugins });
 	}
 
 	requireReload() {
@@ -45,12 +61,17 @@ class PluginList extends React.Component {
 		return (
 			<div>
 				<div className="plugin-market-filters">
-					<div className="plugin-market-filter-search">
-						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
+					<div className="plugin-market-filter-category">
+						<button className={this.state.category === 'all' ? 'active' : ''} onClick={() => this.setState({ category: 'all' })}>全部</button>
+						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={() => this.setState({ category: 'extension' })}>扩展</button>
+						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
+						<button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>
+					</div>
+					<div className={ `plugin-market-filter-search ${ this.state.search ? "filled" : null}` }>
 						<Icon name="search"/>
+						<input placeholder="搜索..." onChange={ e => this.setState({ search: e.target.value })} />
 					</div>
 					<div className="plugin-market-filter-sort">
-						<Icon name="sort"/>
 						{this.state.pluginsAnalyzeData && <button title="下载量" className={this.state.sort_by === 'downloads' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'downloads' })}><Icon name="download"/></button>}
 						<button title="更新时间" className={this.state.sort_by === 'update' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'update' })}><Icon name="clock"/></button>
 						<button title="名称" className={this.state.sort_by === 'name' ? 'active' : ''} onClick={() => this.setState({ sort_by: 'name' })}><Icon name="atoz"/></button>
@@ -64,6 +85,13 @@ class PluginList extends React.Component {
 									if (plugin.hide) return false;
 									if (!plugin.betterncm_version) return true;
 									return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
+								}
+							)
+							.filter(
+								plugin => {
+									if (this.state.category === 'all') return true;
+									if (this.state.category === 'installed') return plugin.installed;
+									return this.state.category == (plugin.type ?? 'extension');
 								}
 							)
 							.filter(
@@ -88,7 +116,13 @@ class PluginList extends React.Component {
 							})
 							.map((plugin) => {
 								return <div key={plugin.slug} className="plugin-item-wrapper">
-									<PluginItem key={plugin.slug} downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count} plugin={plugin} requireReload={this.requireReload} />
+									<PluginItem 
+										key={plugin.slug}
+										downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count}
+										plugin={plugin}
+										requireReload={this.requireReload}
+										setInstalled={this.setInstalled}
+									/>
 								</div>;
 							})
 					}
@@ -121,7 +155,7 @@ class PluginItem extends React.Component {
 	}
 
 	async componentDidMount() {
-		const installed = !!loadedPlugins[this.props.plugin.slug];
+		const installed = this.props.plugin.installed;
 		this.setState({
 			installed: installed
 		});
@@ -147,6 +181,7 @@ class PluginItem extends React.Component {
 				hasUpdate: false,
 				requireReload: true
 			});
+			this.props.setInstalled(this.props.plugin.slug, true);
 			this.props.requireReload();
 		} else {
 			this.setState({
@@ -169,6 +204,7 @@ class PluginItem extends React.Component {
 				hasUpdate: false,
 				requireReload: true
 			});
+			this.props.setInstalled(this.props.plugin.slug, false);
 			this.props.requireReload();
 		} else {
 			this.setState({
