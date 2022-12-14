@@ -46,8 +46,8 @@ class PluginList extends React.Component {
 			<div>
 				<div className="plugin-market-filters">
 					<div className="plugin-market-filter-search">
-						<Icon name="search"/>
 						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
+						<Icon name="search"/>
 					</div>
 					<div className="plugin-market-filter-sort">
 						<Icon name="sort"/>
@@ -256,7 +256,7 @@ class PluginItem extends React.Component {
 		}
 		return (
 			<div className={`plugin-item ${this.state.installing ? 'installing' : ''} ${this.state.deleting ? 'deleting' : ''}`}>
-				<div className="plugin-item-preview" style={{ 'backgroundImage': `url(${preview})` }}></div>
+				<div className="plugin-item-preview" style={{ 'backgroundImage': `url(${preview})` }} />
 				<div className="plugin-item-body">
 					<div className="plugin-item-info">
 						<div className="plugin-item-title">{this.props.plugin.name}</div>
@@ -265,7 +265,7 @@ class PluginItem extends React.Component {
 								authorLink ?
 									(<a onClick={async () => {
 										await betterncm.app.exec(authorLink)
-									}} target="_blank">{this.props.plugin.author}</a>) :
+									}} target="_blank" rel="noreferrer">{this.props.plugin.author}</a>) :
 									(<span>{this.props.plugin.author}</span>)
 							}
 						</div>
@@ -282,7 +282,7 @@ class PluginItem extends React.Component {
 							</span>
 						</div>
 
-						{preview != "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${preview})` }}></div> : null}
+						{preview !== "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${preview})` }} /> : null}
 					</div>
 				</div>
 				<div className="plugin-item-actions" style={{ backgroundColor: this.getActionbarColor(), fill: this.getActionbarIconColor() }}>

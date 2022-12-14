@@ -45,17 +45,21 @@
     .plugin-market-filter-search {
         display: flex;
         align-items: center;
-        transform: translateX(-30px);
+        background: #1b1b1b;
+        border: 1px solid #ffffff22;
+        height: 35px;
+        padding: 0 .5em;
+        border-radius: 6px;
+        font-size: 16px;
+
         > input {
-            background: #1b1b1b;
-            border: 1px solid #ffffff22;
+            background: #1b1b1b00;
+            border: none;
             height: 35px;
-            padding-left: 40px;
             border-radius: 6px;
             font-size: 16px;
         }
         > svg {
-            transform: translateX(32px);
             opacity: .3;
 			width: 18px;
 			fill: #fff;
@@ -71,10 +75,9 @@
     grid-column-gap: 18px;
     grid-row-gap: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     justify-content: center;
     margin-bottom: 30px;
-    margin-left: -7px; /* temporary fix */
 
     .plugin-item {
         $actionbar-hover-width: 35px;
@@ -84,7 +87,7 @@
         --actionbar-width: 4px;
         &:hover {
             --actionbar-width: #{$actionbar-hover-width};
-        }
+        } 
 
         height: var(--card-height);
         background: #1b1b1b;
@@ -102,27 +105,40 @@
         position: relative;
 
         .plugin-item-preview {
-            position: absolute;
-            height: var(--card-height);
-            width: calc(var(--card-height) + var(--card-radius));
+            height: 100%;
+            width: 100%;
             background-repeat: no-repeat;
             background-size: cover;
-            background-position: center;
+            background-position: center; 
         }
-    
+
         .plugin-item-body {
-            transform: translateX(-10px);
-            background: #1b1b1b;
+            width: 100%;
+            transform: translateY(55%);
             position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            &::before{
+                transition: opacity 150ms;
+                z-index: -1;
+                content: "";
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                background: linear-gradient(#0000,#08080899 20%);
+            }
             height: var(--card-height);
-            left: var(--card-height);
-            width: calc(100% - var(--card-height) + var(--card-radius) - $actionbar-hover-width);
-            transition: width var(--transition-duration) ease;
+            transition: all 100ms ease;
             border-radius: var(--card-radius);
             box-sizing: border-box;
             display: flex;
             overflow: hidden;
             z-index: 2;
+            
 
             .plugin-item-info {
                 padding: 15px 15px;
@@ -199,9 +215,9 @@
                     top: 0;
                     width: calc(100% - $actionbar-hover-width);
                     -webkit-mask-image: linear-gradient(90deg, black, #ffffff00);
-                    transition: width var(--transition-duration) ease;
+                    transition: opacity var(--transition-duration) ease;
                     height: 100%;
-                    opacity: .25;
+                    opacity: 0;
                     z-index: -1;
                     background-repeat: no-repeat;
                     background-size: cover;
@@ -220,9 +236,23 @@
                 }
             }
         }
+
+        &:hover .plugin-item-body{
+            background: #222222;
+            transform: translateY(0);
+            opacity: 1;
+            .plugin-item-bg{
+                opacity: 0.3;
+            }
+            &::before{
+                opacity: 0;
+            }
+        }
+
         .plugin-item-actions {
             position: absolute;
             height: 100%;
+            z-index: 20;
             width: calc(var(--actionbar-width) + var(--card-radius));
             right: 0;
             transition: all var(--transition-duration) ease;
@@ -235,6 +265,9 @@
             box-sizing: border-box;
             overflow: hidden;
             justify-content: space-around;
+            .plugin-item-bg{
+                opacity: 0;
+            }
             
             .plugin-action-button {
                 width: 20px;
