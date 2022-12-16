@@ -387,6 +387,13 @@
                 padding-right: 2px;
                 box-sizing: border-box;
                 transform: translateX(-1px);
+
+                &.disabled {
+                    pointer-events: none;
+                    svg {
+                        opacity: 0.3;
+                    }
+                }
             }
         }
         
@@ -412,6 +419,10 @@
                 margin-right: 8px;
                 display: inline-block;
                 filter: drop-shadow(0 1px 3px rgb(0 0 0 / 75%));
+                
+                svg {
+                    overflow: visible;
+                }
             }
         }
     }

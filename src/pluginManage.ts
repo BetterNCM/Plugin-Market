@@ -24,6 +24,28 @@ export async function installPlugin(plugin, onlinePlugins) {
 	return "success";
 }
 
+export const getDependencies = (plugin, onlinePlugins) => {
+	let dependencies = [];
+
+	for (let requirement of (plugin.requirements ?? [])) {
+		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
+		if (requiredPlugin) {
+			if (requiredPlugin.installed) continue;
+			dependencies.push(requirement);
+			let result = getDependencies(requiredPlugin, onlinePlugins);
+			if (result == null) {
+				return null;
+			}
+			dependencies = dependencies.concat(result);
+		} else {
+			return null;
+		}
+	}
+
+	return dependencies;
+}
+			
+
 export async function deletePlugin(plugin) {
 	if (!loadedPlugins[plugin.slug]) {
 		if (await betterncm.fs.exists("./plugins/" + plugin.file)) {
