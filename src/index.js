@@ -25,7 +25,7 @@ class PluginList extends React.Component {
 		};
 		this.requireReload = this.requireReload.bind(this);
 		this.setInstalled = this.setInstalled.bind(this);
-		this.setSortBy = this.setSortBy.bind(this);
+		this.setHasUpdate = this.setHasUpdate.bind(this);
 	}
 
 	async componentDidMount() {
@@ -33,8 +33,9 @@ class PluginList extends React.Component {
 			onlinePlugins => {
 				onlinePlugins = onlinePlugins.map(plugin => {
 					plugin.installed = !!loadedPlugins[plugin.slug];
+					plugin.hasUpdate = plugin.installed && compareVersions(plugin.version, loadedPlugins[plugin.slug].manifest.version) > 0;
 					return plugin;
-				});
+				}).filter(plugin => !(plugin.depreciated || plugin.hide));
 				this.setState({ onlinePlugins });
 			});
 		getPluginDownloads().then(pluginsAnalyzeData => this.setState({ pluginsAnalyzeData }));
@@ -43,7 +44,22 @@ class PluginList extends React.Component {
 	setInstalled(slug, installed) {
 		let onlinePlugins = this.state.onlinePlugins;
 		onlinePlugins.find(plugin => plugin.slug === slug).installed = installed;
-		this.setState({ onlinePlugins });
+		this.setState({ onlinePlugins }, () => this.resetCategorySelection());
+	}
+
+	setHasUpdate(slug, hasUpdate) {
+		let onlinePlugins = this.state.onlinePlugins;
+		onlinePlugins.find(plugin => plugin.slug === slug).hasUpdate = hasUpdate;
+		this.setState({ onlinePlugins }, () => this.resetCategorySelection());
+	}
+
+	resetCategorySelection() {
+		if (this.state.category == 'installed' && !this.state.onlinePlugins.filter(plugin => plugin.installed).length) {
+			this.setState({ category: 'all' });
+		}
+		if (this.state.category == 'update' && !this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length) {
+			this.setState({ category: 'all' });
+		}
 	}
 
 	requireReload() {
@@ -80,7 +96,9 @@ class PluginList extends React.Component {
 						<button className={this.state.category === 'all' ? 'active' : ''} onClick={() => this.setState({ category: 'all' })}>全部</button>
 						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={() => this.setState({ category: 'extension' })}>扩展</button>
 						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
-						<button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>
+						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
+						{console.log(this.state.onlinePlugins.filter(plugin => plugin.hasUpdate))}
+						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={() => this.setState({ category: 'update' })}>有更新</button>}
 					</div>
 					<div className={`plugin-market-filter-search ${ this.state.search ? 'filled' : ''}`}>
 						<Icon name="search"/>
@@ -97,15 +115,16 @@ class PluginList extends React.Component {
 						this.state.onlinePlugins
 							.filter(
 								plugin => {
-									if (plugin.hide) return false;
+									if (plugin.depreciated || plugin.hide) return false;
 									if (!plugin.betterncm_version) return true;
 									return satisfies(currentBetterNCMVersion, plugin.betterncm_version);
 								}
 							)
 							.filter(
 								plugin => {
-									if (this.state.category === 'all') return true;
+									if (this.state.category === 'all') return plugin.type !== 'lib';
 									if (this.state.category === 'installed') return plugin.installed;
+									if (this.state.category === 'update') return plugin.hasUpdate;
 									return this.state.category == (plugin.type ?? 'extension');
 								}
 							)
@@ -139,6 +158,7 @@ class PluginList extends React.Component {
 										plugin={plugin}
 										requireReload={this.requireReload}
 										setInstalled={this.setInstalled}
+										setHasUpdate={this.setHasUpdate}
 									/>
 								</div>;
 							})
@@ -172,17 +192,7 @@ class PluginItem extends React.Component {
 	}
 
 	async componentDidMount() {
-		const installed = this.props.plugin.installed;
-		this.setState({
-			installed: installed
-		});
-		if (installed) {
-			if (compareVersions(this.props.plugin.version, loadedPlugins[this.props.plugin.slug].manifest.version) > 0) {
-				this.setState({
-					hasUpdate: true
-				});
-			}
-		}
+
 	}
 
 	async install() {
@@ -199,6 +209,7 @@ class PluginItem extends React.Component {
 				requireReload: true
 			});
 			this.props.setInstalled(this.props.plugin.slug, true);
+			this.props.setHasUpdate(this.props.plugin.slug, false);
 			this.props.requireReload();
 		} else {
 			this.setState({
@@ -222,6 +233,7 @@ class PluginItem extends React.Component {
 				requireReload: true
 			});
 			this.props.setInstalled(this.props.plugin.slug, false);
+			this.props.setHasUpdate(this.props.plugin.slug, false);
 			this.props.requireReload();
 		} else {
 			this.setState({
@@ -232,8 +244,8 @@ class PluginItem extends React.Component {
 	}
 
 	getActionbarColor() {
-		if (this.state.installed) {
-			if (this.state.hasUpdate) {
+		if (this.props.plugin.installed) {
+			if (this.props.plugin.hasUpdate) {
 				return '#66ccff';
 			}
 			return '#ccff99';
@@ -246,7 +258,7 @@ class PluginItem extends React.Component {
 		if (this.state.installing || this.state.deleting) {
 			return '#000';
 		}
-		if (!this.state.installed) {
+		if (!this.props.plugin.installed) {
 			return '#ccc';
 		}
 		return '#3a3a3a';
@@ -254,7 +266,7 @@ class PluginItem extends React.Component {
 
 	getActionButtons() {
 		let buttons = [];
-		if (this.state.installed) {
+		if (this.props.plugin.installed) {
 			buttons.push(
 				this.state.deleting ? (
 					<button className="plugin-action-button">
@@ -266,7 +278,7 @@ class PluginItem extends React.Component {
 					</button>
 				)
 			)
-			if (this.state.hasUpdate) {
+			if (this.props.plugin.hasUpdate) {
 				buttons.push(
 					this.state.installing ? (
 						<button className="plugin-action-button">
@@ -328,7 +340,7 @@ class PluginItem extends React.Component {
 
 							<span className="plugin-item-meta plugin-item-version">
 								{
-									this.state.hasUpdate ?
+									this.props.plugin.hasUpdate ?
 										(<span><Icon name="has_update" /> {loadedPlugins[this.props.plugin.slug].manifest.version} → <span className='new-version'>{this.props.plugin.version}</span></span>) :
 										(<span><Icon name="tag" />{this.props.plugin.version}</span>)
 								}
@@ -343,7 +355,7 @@ class PluginItem extends React.Component {
 				</div>
 				<div className="plugin-item-state-indicator-container">
 					{
-						this.state.installed ? (
+						this.props.plugin.installed ? (
 							<div className="plugin-item-state-indicator installed">
 								<Icon name="circle_check" />
 							</div>
