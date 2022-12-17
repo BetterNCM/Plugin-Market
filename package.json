@@ -32,8 +32,8 @@
     "webpack-dev-server": "^4.11.1"
   },
   "version": "1.0.0",
-  "description": "My webpack project",
-  "name": "my-webpack-project",
+  "description": "Plugin Market",
+  "name": "plugin-market",
   "dependencies": {
     "@formkit/auto-animate": "^1.0.0-beta.5",
     "compare-versions": "^5.0.1",

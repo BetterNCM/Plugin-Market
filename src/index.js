@@ -34,6 +34,7 @@ class PluginList extends React.Component {
 				onlinePlugins = onlinePlugins.map(plugin => {
 					plugin.installed = !!loadedPlugins[plugin.slug];
 					plugin.hasUpdate = plugin.installed && compareVersions(plugin.version, loadedPlugins[plugin.slug].manifest.version) > 0;
+					plugin.type = plugin.type ?? 'extension';
 					return plugin;
 				}).filter(plugin => !(plugin.deprecated || plugin.hide));
 				this.setState({ onlinePlugins });
@@ -376,9 +377,16 @@ class PluginItem extends React.Component {
 				</div>
 				<div className="plugin-item-state-indicator-container">
 					{
-						this.props.plugin.installed ? (
-							<div className="plugin-item-state-indicator installed">
-								<Icon name="circle_check" />
+						this.props.plugin.type === 'extension' ? (
+							<div className="plugin-item-state-indicator extension">
+								<Icon name="puzzle" />
+							</div>
+						) : null
+					}
+					{
+						this.props.plugin.type === 'theme' ? (
+							<div className="plugin-item-state-indicator theme">
+								<Icon name="brush" />
 							</div>
 						) : null
 					}
