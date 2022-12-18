@@ -3,6 +3,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const copyWebpackPlugin = require("copy-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV == 'production';
 
@@ -70,6 +71,14 @@ const config = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
     },
+    experiments: {
+        topLevelAwait: true
+    },
+    optimization: {
+        minimizer: [new TerserPlugin({
+            extractComments: false,
+        })],
+    },
 };
 
 module.exports = () => {
@@ -81,8 +90,5 @@ module.exports = () => {
         config.mode = 'development';
     }
 
-    config.experiments = {
-        topLevelAwait: true
-    };
     return config;
 };
