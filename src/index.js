@@ -201,11 +201,14 @@ class PluginItem extends React.Component {
 
 	}
 
-	async install() {
+	async install(update = false) {
 		if (this.state.installing || this.state.deleting) return;
 		this.setState({
 			installing: true
 		});
+		if (update) {
+			await deletePlugin(this.props.plugin);
+		}
 		const result = await installPlugin(this.props.plugin, this.props.onlinePlugins);
 		if (result == 'success') {
 			this.setState({
