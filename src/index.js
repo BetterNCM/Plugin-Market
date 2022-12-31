@@ -3,7 +3,6 @@ import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
 import { formatNumber } from './utils';
-import FlipMove from 'react-flip-move';
 import './styles.scss'
 
 
@@ -110,7 +109,7 @@ class PluginList extends React.Component {
 						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz"/></button>
 					</div>
 				</div>
-				<FlipMove className="plugin-market-container">
+				<div className="plugin-market-container">
 					{
 						this.state.onlinePlugins
 							.filter(
@@ -169,7 +168,7 @@ class PluginList extends React.Component {
 								</div>;
 							})
 					}
-				</FlipMove>
+				</div>
 				{
 					this.state.requireReload ?
 						<div className="reload-notice">
@@ -185,6 +184,8 @@ class PluginList extends React.Component {
 		);
 	}
 }
+
+
 class PluginItem extends React.Component {
 	constructor(props) {
 		super(props);
