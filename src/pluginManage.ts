@@ -6,6 +6,7 @@ export const baseURL = "https://gitee.com/microblock/BetterNCMPluginsMarketData/
 
 export async function installPlugin(plugin, onlinePlugins) {
     incPluginDownload(plugin.slug,plugin.version);
+
     
 	for (let requirement of (plugin.requirements ?? [])) {
 		if (loadedPlugins[requirement]) continue;

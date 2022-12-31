@@ -80,7 +80,7 @@ class PluginList extends React.Component {
 			});
 		}
 	}
-	
+
 
 	render() {
 		if (!this.state.onlinePlugins) {
@@ -99,14 +99,14 @@ class PluginList extends React.Component {
 						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={() => this.setState({ category: 'update' })}>有更新</button>}
 					</div>
-					<div className={`plugin-market-filter-search ${ this.state.search ? 'filled' : ''}`}>
-						<Icon name="search"/>
-						<input placeholder="搜索..." onChange={ e => this.setState({ search: e.target.value })} />
+					<div className={`plugin-market-filter-search ${this.state.search ? 'filled' : ''}`}>
+						<Icon name="search" />
+						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
 					</div>
 					<div className="plugin-market-filter-sort">
-						{this.state.pluginsAnalyzeData && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download"/></button>}
-						<button title="更新时间" className={`${this.state.sort_by === 'update' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('update')}><Icon name="clock"/></button>
-						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz"/></button>
+						{this.state.pluginsAnalyzeData && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download" /></button>}
+						<button title="更新时间" className={`${this.state.sort_by === 'update' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('update')}><Icon name="clock" /></button>
+						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz" /></button>
 					</div>
 				</div>
 				<div className="plugin-market-container">
@@ -140,11 +140,11 @@ class PluginList extends React.Component {
 								return (() => {
 									switch (this.state.sort_by) {
 										case 'downloads':
-											return (this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0) - 
+											return (this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0) -
 												(this.state.pluginsAnalyzeData?.find(v => v.name === b.slug)?.count ?? 0);
 										case 'name':
 											return a.name > b.name ? 1 : -1;
-										case 'update': 
+										case 'update':
 											return a.update_time - b.update_time;
 									}
 								})() * (this.state.sort_order === 'asc' ? 1 : -1)
@@ -156,7 +156,7 @@ class PluginList extends React.Component {
 							})
 							.map((plugin) => {
 								return <div key={plugin.slug} className="plugin-item-wrapper">
-									<PluginItem 
+									<PluginItem
 										key={plugin.slug}
 										downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count}
 										plugin={plugin}
@@ -210,6 +210,14 @@ class PluginItem extends React.Component {
 		if (update) {
 			await deletePlugin(this.props.plugin);
 		}
+
+		if (this.props.plugin.type === "theme") {
+			for (const plugin of this.props.onlinePlugins.filter(plugin => plugin.type === "theme")) {
+				await deletePlugin(plugin);
+				this.props.setInstalled(plugin.slug, false);
+			}
+		}
+
 		const result = await installPlugin(this.props.plugin, this.props.onlinePlugins);
 		if (result == 'success') {
 			this.setState({
@@ -362,7 +370,7 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">{this.props.plugin.description}</div>
 						<div>
-							{ this.props.downloads > 0 && <span className="plugin-item-meta plugin-downloads"><Icon name="download" /><span>{ formatNumber(this.props.downloads) }</span></span> }
+							{this.props.downloads > 0 && <span className="plugin-item-meta plugin-downloads"><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>}
 
 							<span className="plugin-item-meta plugin-item-version">
 								{
