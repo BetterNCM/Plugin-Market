@@ -34,7 +34,6 @@
   "description": "Plugin Market",
   "name": "plugin-market",
   "dependencies": {
-    "@formkit/auto-animate": "^1.0.0-beta.5",
     "compare-versions": "^5.0.1"
   }
 }
