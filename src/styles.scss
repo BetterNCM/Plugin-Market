@@ -257,6 +257,7 @@
                 
                 .plugin-item-title {
                     font-size: 18px;
+                    color:white;
                     text-shadow: 0 1px 3px rgb(0 0 0 / 75%);
                     margin-bottom: 6px;
                     font-weight: bold;
@@ -276,6 +277,7 @@
                 }
                 .plugin-item-description {
                     font-size: 14px;
+                    color:rgba(255, 255, 255, 0.658);
                     text-shadow: 0 1px 3px rgb(0 0 0 / 75%);
                     margin-bottom: 6px;
                     line-height: 1.2;
@@ -293,6 +295,7 @@
                     }
                     span{
                         padding: 0 .2em;
+                        color:rgba(255, 255, 255, 0.658);
                     }
 
                     transition: all 0.2s;
@@ -306,6 +309,7 @@
                     &:not(:last-child)::after{
                         content: "|";
                         margin-left: 5px;
+                        color:rgba(255, 255, 255, 0.658);
                     }
                 }
                 .plugin-item-version {
