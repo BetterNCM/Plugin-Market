@@ -276,6 +276,12 @@ class PluginItem extends React.Component {
 		return true;
 	}
 
+	hasSettings() {
+		if (loadedPlugins[this.props.plugin.slug]) {
+			return loadedPlugins[this.props.plugin.slug].haveConfigElement();
+		}
+		return false;
+	}
 
 	getActionbarColor() {
 		if (this.props.plugin.installed) {
@@ -312,6 +318,13 @@ class PluginItem extends React.Component {
 					</button>
 				)
 			)
+			if (this.hasSettings()) {
+				buttons.push(
+					<button className="plugin-action-button" onClick={() => { document.querySelector(`.better-ncm-manager .loaded-plugins-list .plugin-btn[plugin-slug='${this.props.plugin.slug}']`).click() }}>
+						<Icon name="settings" />
+					</button>
+				)
+			}
 			if (this.props.plugin.hasUpdate) {
 				buttons.push(
 					this.state.installing ? (
