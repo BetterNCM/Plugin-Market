@@ -320,7 +320,7 @@ class PluginItem extends React.Component {
 			)
 			if (this.hasSettings()) {
 				buttons.push(
-					<button className="plugin-action-button" onClick={() => { document.querySelector(`.better-ncm-manager .loaded-plugins-list .plugin-btn[plugin-slug='${this.props.plugin.slug}']`).click() }}>
+					<button className="plugin-action-button" onClick={() => { document.querySelector(`.better-ncm-manager .loaded-plugins-list .plugin-btn[data-plugin-slug='${this.props.plugin.slug}']`).click() }}>
 						<Icon name="settings" />
 					</button>
 				)
