@@ -319,7 +319,7 @@ class PluginItem extends React.Component {
 							<Icon name="loading" className="spinning" />
 						</button>
 					) : (
-						<button className="plugin-action-button" onClick={() => { this.install() }}>
+						<button className="plugin-action-button" onClick={() => { this.install(true) }}>
 							<Icon name="update" />
 						</button>
 					)
