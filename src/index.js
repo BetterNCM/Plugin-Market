@@ -2,7 +2,7 @@ import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
-import { formatNumber } from './utils';
+import { formatNumber, formatShortTime } from './utils';
 import './styles.scss'
 
 
@@ -370,15 +370,28 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">{this.props.plugin.description}</div>
 						<div>
-							{this.props.downloads > 0 && <span className="plugin-item-meta plugin-downloads"><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>}
+							{
+								this.props.downloads > 0 &&
+								<span className="plugin-item-meta plugin-downloads" title="下载量"><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>
+							}
 
-							<span className="plugin-item-meta plugin-item-version">
+							<span className="plugin-item-meta plugin-item-version" title="版本号">
 								{
 									this.props.plugin.hasUpdate ?
 										(<span><Icon name="has_update" /> {loadedPlugins[this.props.plugin.slug].manifest.version} → <span className='new-version'>{this.props.plugin.version}</span></span>) :
 										(<span><Icon name="tag" />{this.props.plugin.version}</span>)
 								}
 							</span>
+
+							<span className="plugin-item-meta plugin-item-update-time" title="最后更新时间">
+								<Icon name="clock"/> {formatShortTime(this.props.plugin.update_time)}
+							</span>
+
+							{
+								this.props.plugin.repo &&
+								<span className="plugin-item-meta plugin-github" title="Github">
+									<a onClick={async () => { await betterncm.app.exec(`https://github.com/${this.props.plugin.repo}`) }}><Icon name="github"/></a></span>
+							}
 						</div>
 
 						{preview !== "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${preview})` }} /> : null}

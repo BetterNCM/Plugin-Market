@@ -301,16 +301,20 @@
 
                     transition: all 0.2s;
                     opacity: .8;
-                    margin-right: 4px;
+                    margin-right: 8px;
 
                     &:hover{
                         opacity: 1;
                     }
 
                     &:not(:last-child)::after{
-                        content: "|";
+                        /*content: "|";
                         margin-left: 5px;
-                        color:rgba(255, 255, 255, 0.658);
+                        color:rgba(255, 255, 255, 0.658);*/
+                    }
+
+                    &.plugin-github {
+                        margin-left: 4px;
                     }
                 }
                 .plugin-item-version {
