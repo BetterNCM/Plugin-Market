@@ -285,6 +285,10 @@
                     flex: 1;
                     overflow: hidden;
                 }
+                .plugin-item-incompatible-info {
+                    font-weight: bold;
+                    color: #ec4141;
+                }
                 .plugin-item-meta{
                     svg {
                         width: 12px;

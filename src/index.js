@@ -284,6 +284,26 @@ class PluginItem extends React.Component {
 		return true;
 	}
 
+	canInstall() {
+		for (const plugin of this.props.plugin?.incompatible ?? []) {
+			if (this.props.onlinePlugins.find(v => v.slug === plugin)?.installed) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	incompatibleList() {
+		const list = [];
+		for (const plugin of this.props.plugin.incompatible) {
+			const onlinePlugin = this.props.onlinePlugins.find(v => v.slug === plugin);
+			if (onlinePlugin?.installed) {
+				list.push(onlinePlugin.name);
+			}
+		}
+		return list;
+	}
+
 	hasSettings() {
 		if (loadedPlugins[this.props.plugin.slug]) {
 			return loadedPlugins[this.props.plugin.slug].haveConfigElement();
@@ -353,7 +373,7 @@ class PluginItem extends React.Component {
 						<Icon name="loading" className="spinning" />
 					</button>
 				) : (
-					<button className="plugin-action-button" onClick={() => { this.install() }}>
+					<button className={`plugin-action-button ${this.canInstall() ? '' : 'disabled'}`} onClick={() => { this.install() }}>
 						<Icon name="download" />
 					</button>
 				)
@@ -389,7 +409,10 @@ class PluginItem extends React.Component {
 									(<span>{this.props.plugin.author}</span>)
 							}
 						</div>
-						<div className="plugin-item-description">{this.props.plugin.description}</div>
+						<div className="plugin-item-description">
+							{!this.canInstall() && <span class="plugin-item-incompatible-info">(与 {this.incompatibleList().join('、')} 不兼容) </span>}
+							{this.props.plugin.description}
+						</div>
 						<div>
 							{
 								this.props.downloads > 0 &&
