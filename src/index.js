@@ -15,7 +15,7 @@ class PluginList extends React.Component {
 		super(props);
 		this.state = {
 			onlinePlugins: null,
-			pluginsAnalyzeData: null,
+			pluginsAnalyzeData: {},
 			requireReload: false,
 			category: 'all',
 			search: '',
@@ -38,7 +38,15 @@ class PluginList extends React.Component {
 				}).filter(plugin => !(plugin.deprecated || plugin.hide));
 				this.setState({ onlinePlugins });
 			});
-		getPluginDownloads().then(pluginsAnalyzeData => this.setState({ pluginsAnalyzeData }));
+		getPluginDownloads().then(
+			pluginsAnalyzeData => {
+				let dict = {};
+				pluginsAnalyzeData.forEach(plugin => {
+					dict[plugin.name] = (dict[plugin.name] ?? 0) + plugin.count;
+				});
+				this.setState({ pluginsAnalyzeData: dict });
+			}
+		);
 	}
 
 	setInstalled(slug, installed) {
@@ -140,8 +148,8 @@ class PluginList extends React.Component {
 								return (() => {
 									switch (this.state.sort_by) {
 										case 'downloads':
-											return (this.state.pluginsAnalyzeData?.find(v => v.name === a.slug)?.count ?? 0) -
-												(this.state.pluginsAnalyzeData?.find(v => v.name === b.slug)?.count ?? 0);
+											return (this.state.pluginsAnalyzeData[a.slug] ?? 0) -
+												(this.state.pluginsAnalyzeData[b.slug] ?? 0);
 										case 'name':
 											return a.name > b.name ? 1 : -1;
 										case 'update':
@@ -158,7 +166,7 @@ class PluginList extends React.Component {
 								return <div key={plugin.slug} className="plugin-item-wrapper">
 									<PluginItem
 										key={plugin.slug}
-										downloads={this.state.pluginsAnalyzeData?.find(v => v.name === plugin.slug)?.count}
+										downloads={this.state.pluginsAnalyzeData[plugin.slug] ?? 0}
 										plugin={plugin}
 										onlinePlugins={this.state.onlinePlugins}
 										requireReload={this.requireReload}
