@@ -416,18 +416,18 @@ class PluginItem extends React.Component {
 						<div>
 							{
 								this.props.downloads > 0 &&
-								<span className="plugin-item-meta plugin-downloads" title="下载量"><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>
+								<span className="plugin-item-meta plugin-downloads" title={`下载量${this.props.downloads >= 1000 ? ` (${this.props.downloads})` : ''}`}><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>
 							}
 
 							<span className="plugin-item-meta plugin-item-version" title="版本号">
 								{
 									this.props.plugin.hasUpdate ?
 										(<span><Icon name="has_update" /> {loadedPlugins[this.props.plugin.slug].manifest.version} → <span className='new-version'>{this.props.plugin.version}</span></span>) :
-										(<span><Icon name="tag" />{this.props.plugin.version}</span>)
+										(<span><Icon name="tag" /> {this.props.plugin.version}</span>)
 								}
 							</span>
 
-							<span className="plugin-item-meta plugin-item-update-time" title="最后更新时间">
+							<span className="plugin-item-meta plugin-item-update-time" title={`最后更新时间 (${new Date(this.props.plugin.update_time * 1000).toLocaleString('zh-cn')})`}>
 								<Icon name="clock"/> {formatShortTime(this.props.plugin.update_time)}
 							</span>
 
