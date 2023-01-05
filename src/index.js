@@ -101,7 +101,15 @@ class PluginList extends React.Component {
 			<div>
 				<div className="plugin-market-filters">
 					<div className="plugin-market-filter-category">
-						<button className={this.state.category === 'all' ? 'active' : ''} onClick={() => this.setState({ category: 'all' })}>全部</button>
+						<button className={this.state.category === 'all' ? 'active' : ''} onClick={(e) => {
+							if (e.shiftKey) {
+								this.setState({
+									onlinePlugins: null,
+									pluginsAnalyzeData: {}
+								}, () => this.componentDidMount());
+							}
+							this.setState({ category: 'all' })
+						}}>全部</button>
 						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={() => this.setState({ category: 'extension' })}>扩展</button>
 						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
 						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
@@ -112,7 +120,7 @@ class PluginList extends React.Component {
 						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
 					</div>
 					<div className="plugin-market-filter-sort">
-						{this.state.pluginsAnalyzeData && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download" /></button>}
+						{this.state.pluginsAnalyzeData != {} && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download" /></button>}
 						<button title="更新时间" className={`${this.state.sort_by === 'update' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('update')}><Icon name="clock" /></button>
 						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz" /></button>
 					</div>
