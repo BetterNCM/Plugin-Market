@@ -45,7 +45,7 @@ export const getDependencies = (plugin, onlinePlugins) => {
 
 	return dependencies;
 }
-			
+
 
 export async function deletePlugin(plugin) {
 	if (!loadedPlugins[plugin.slug]) {
