@@ -17,6 +17,7 @@ class PluginList extends React.Component {
 			onlinePlugins: null,
 			pluginsAnalyzeData: {},
 			requireReload: false,
+			requireRestart: false,
 			category: 'all',
 			search: '',
 			sort_by: 'downloads',
@@ -70,9 +71,10 @@ class PluginList extends React.Component {
 		}
 	}
 
-	requireReload() {
+	requireReload(requireRestart = false) {
 		this.setState({
-			requireReload: true
+			requireReload: true,
+			requireRestart: requireRestart
 		});
 	}
 
@@ -190,7 +192,7 @@ class PluginList extends React.Component {
 						<div className="reload-notice">
 							<div>插件的更改需要重载以生效</div>
 							<button onClick={async () => {
-								await betterncm.app.reloadPlugins();
+								this.state.requireRestart ? await betterncm_native.app.restart() : await betterncm.app.reloadPlugins();
 								betterncm.reload()
 							}}><Icon name="reload" /> 重载</button>
 						</div>
@@ -247,7 +249,7 @@ class PluginItem extends React.Component {
 				this.props.setInstalled(slug, true);
 			}
 			this.props.setHasUpdate(this.props.plugin.slug, false);
-			this.props.requireReload();
+			this.props.requireReload(!!this.props.plugin.native);
 		} else {
 			this.setState({
 				installing: false
@@ -271,7 +273,7 @@ class PluginItem extends React.Component {
 			});
 			this.props.setInstalled(this.props.plugin.slug, false);
 			this.props.setHasUpdate(this.props.plugin.slug, false);
-			this.props.requireReload();
+			this.props.requireReload(!!this.props.plugin.native);
 		} else {
 			this.setState({
 				deleting: false
