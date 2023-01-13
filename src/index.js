@@ -26,6 +26,7 @@ class PluginList extends React.Component {
 		this.requireReload = this.requireReload.bind(this);
 		this.setInstalled = this.setInstalled.bind(this);
 		this.setHasUpdate = this.setHasUpdate.bind(this);
+		this.updateNotificationBadge = this.updateNotificationBadge.bind(this);
 	}
 
 	async componentDidMount() {
@@ -38,6 +39,7 @@ class PluginList extends React.Component {
 					return plugin;
 				}).filter(plugin => !(plugin.deprecated || plugin.hide));
 				this.setState({ onlinePlugins });
+				this.updateNotificationBadge();
 			});
 		getPluginDownloads().then(
 			pluginsAnalyzeData => {
@@ -48,6 +50,14 @@ class PluginList extends React.Component {
 				this.setState({ pluginsAnalyzeData: dict });
 			}
 		);
+	}
+
+	updateNotificationBadge() {		
+		if (this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length) {
+			document.body.classList.add('plugins-have-update');
+		} else {
+			document.body.classList.remove('plugins-have-update');
+		}
 	}
 
 	setInstalled(slug, installed) {
@@ -182,6 +192,7 @@ class PluginList extends React.Component {
 										requireReload={this.requireReload}
 										setInstalled={this.setInstalled}
 										setHasUpdate={this.setHasUpdate}
+										updateNotificationBadge={this.updateNotificationBadge}
 									/>
 								</div>;
 							})
@@ -250,6 +261,7 @@ class PluginItem extends React.Component {
 			}
 			this.props.setHasUpdate(this.props.plugin.slug, false);
 			this.props.requireReload(!!this.props.plugin.native);
+			this.props.updateNotificationBadge();
 		} else {
 			this.setState({
 				installing: false
@@ -274,6 +286,7 @@ class PluginItem extends React.Component {
 			this.props.setInstalled(this.props.plugin.slug, false);
 			this.props.setHasUpdate(this.props.plugin.slug, false);
 			this.props.requireReload(!!this.props.plugin.native);
+			this.props.updateNotificationBadge();
 		} else {
 			this.setState({
 				deleting: false

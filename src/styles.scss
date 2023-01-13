@@ -527,3 +527,29 @@
         transform: translateY(0);
     }
 }
+
+
+body.plugins-have-update {
+    .set[title='BetterNCM']::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 7px;
+        height: 7px;
+        background: #EC4141;
+        right: 2px;
+        top: 3px;
+        border-radius: 100px;
+        pointer-events: none;
+    }
+    .plugin-btn[data-plugin-slug='PluginMarket'] .plugin-list-name::after {
+        content: '';
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        background: #EC4141;
+        border-radius: 100px;
+        pointer-events: none;
+        margin-left: 5px;
+    }
+}
