@@ -289,6 +289,12 @@
                     font-weight: bold;
                     color: #ec4141;
                 }
+                .plugin-item-metas {
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    row-gap: 5px;
+                }
                 .plugin-item-meta{
                     svg {
                         width: 12px;

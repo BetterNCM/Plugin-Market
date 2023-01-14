@@ -1,7 +1,7 @@
 {
     "manifest_version": 1,
     "name": "PluginMarket1",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "author": "BetterNCM",
     "injects": {
         "Main": [

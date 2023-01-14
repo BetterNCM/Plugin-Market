@@ -436,7 +436,7 @@ class PluginItem extends React.Component {
 							{!this.canInstall() && <span class="plugin-item-incompatible-info">(与 {this.incompatibleList().join('、')} 不兼容) </span>}
 							{this.props.plugin.description}
 						</div>
-						<div>
+						<div className="plugin-item-metas">
 							{
 								this.props.downloads > 0 &&
 								<span className="plugin-item-meta plugin-downloads" title={`下载量${this.props.downloads >= 1000 ? ` (${this.props.downloads})` : ''}`}><Icon name="download" /><span>{formatNumber(this.props.downloads)}</span></span>
