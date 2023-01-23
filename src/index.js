@@ -5,7 +5,18 @@ import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseUR
 import { formatNumber, formatShortTime } from './utils';
 import './styles.scss'
 
+import selfManifest from './manifest.json';
 
+const setConfig = (key, value) => {
+	localStorage.setItem(`pluginmarket-${key}`, JSON.stringify(value));
+};
+const getConfig = (key, defaultValue) => {
+	let value = localStorage.getItem(`pluginmarket-${key}`);
+	if (value === null) {
+		return defaultValue;
+	}
+	return JSON.parse(value);
+};
 
 
 let currentBetterNCMVersion = await betterncm.app.getBetterNCMVersion();
@@ -21,7 +32,9 @@ class PluginList extends React.Component {
 			category: 'all',
 			search: '',
 			sort_by: 'downloads',
-			sort_order: 'desc'
+			sort_order: 'desc',
+			devOptions: getConfig('devOptions', false),
+			showLibsTab: getConfig('showLibsTab', false),
 		};
 		this.requireReload = this.requireReload.bind(this);
 		this.setInstalled = this.setInstalled.bind(this);
@@ -84,7 +97,7 @@ class PluginList extends React.Component {
 	requireReload(requireRestart = false) {
 		this.setState({
 			requireReload: true,
-			requireRestart: requireRestart
+			requireRestart: (requireRestart || this.state.requireRestart)
 		});
 	}
 
@@ -124,6 +137,7 @@ class PluginList extends React.Component {
 						}}>全部</button>
 						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={() => this.setState({ category: 'extension' })}>扩展</button>
 						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
+						{this.state.showLibsTab && this.state.devOptions && <button className={this.state.category === 'lib' ? 'active' : ''} onClick={() => this.setState({ category: 'lib' })}>依赖库</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={() => this.setState({ category: 'update' })}>有更新</button>}
 					</div>
@@ -149,9 +163,10 @@ class PluginList extends React.Component {
 							)
 							.filter(
 								plugin => {
-									if (this.state.category === 'all') return plugin.type !== 'lib';
+									if (this.state.category === 'all') return !(['lib', 'library', 'dependency', 'framework'].includes(plugin.type));
 									if (this.state.category === 'installed') return plugin.installed;
 									if (this.state.category === 'update') return plugin.hasUpdate;
+									if (this.state.category === 'lib') return ['lib', 'library', 'dependency', 'framework'].includes(plugin.type);
 									return this.state.category == (plugin.type ?? 'extension');
 								}
 							)
@@ -201,14 +216,64 @@ class PluginList extends React.Component {
 				{
 					this.state.requireReload ?
 						<div className="reload-notice">
-							<div>插件的更改需要重载以生效</div>
+							<div>插件的更改需要{ this.state.requireRestart ? '重启' : '重载' }以生效</div>
 							<button onClick={async () => {
 								this.state.requireRestart ? await betterncm_native.app.restart() : await betterncm.app.reloadPlugins();
 								betterncm.reload()
-							}}><Icon name="reload" /> 重载</button>
+							}}><Icon name="reload" /> { this.state.requireRestart ? '重启' : '重载' }</button>
 						</div>
 						: null
 				}
+				<div className={`plugin-market-dev-options ${this.state.devOptions ? 'active' : ''}`}>
+					<div className="plugin-market-dev-options-switch md-switch">
+						<label className="label">开发者选项</label>
+						<input type="checkbox" id="dev-options" checked={this.state.devOptions} onChange={e => {
+							setConfig('devOptions', e.target.checked);
+							this.setState({
+								devOptions: e.target.checked
+							});
+						}} />
+						<label htmlFor="dev-options" className="toggle"><span></span></label>
+					</div>
+					<div className="plugin-market-dev-options-content" style={{ display: this.state.devOptions ? 'block' : 'none' }}>
+						<div className="md-switch">
+							<label className="label">显示"依赖库"分类</label>
+							<input type="checkbox" id="show-libs-tab" checked={this.state.showLibsTab} onChange={e => {
+								setConfig('showLibsTab', e.target.checked);
+								this.setState({
+									showLibsTab: e.target.checked
+								});
+							}} />
+							<label htmlFor="show-libs-tab" className="toggle"><span></span></label>
+						</div>
+						<div>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								this.setState({
+									onlinePlugins: null,
+									pluginsAnalyzeData: {}
+								}, () => this.componentDidMount());
+							}}>重载插件列表</a>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								console.log(this.state.onlinePlugins);
+							}}>打印插件列表</a>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								console.log(this.state.pluginsAnalyzeData);
+							}}>打印插件统计数据</a>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								console.log(loadedPlugins);
+							}}>打印已加载插件</a>
+						</div>
+						<div>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								betterncm.app.reloadPlugins();
+							}}>重载网易云</a>
+							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
+								betterncm_native.app.restart();
+							}}>重启网易云</a>
+						</div>
+						<div>版本: {selfManifest.version}</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -296,15 +361,24 @@ class PluginItem extends React.Component {
 	}
 
 	canDelete() {
-		if (this.props.plugin.type === 'lib') {
-			const installedPlugins = this.props.onlinePlugins.filter(v => v.installed);
-			for (const plugin of installedPlugins) {
-				if (plugin.requirements?.includes(this.props.plugin.slug)) {
-					return false;
-				}
+		const installedPlugins = this.props.onlinePlugins.filter(v => v.installed);
+		for (const plugin of installedPlugins) {
+			if (plugin.requirements?.includes(this.props.plugin.slug)) {
+				return false;
 			}
 		}
 		return true;
+	}
+
+	beingDependedByList() {
+		const list = [];
+		const installedPlugins = this.props.onlinePlugins.filter(v => v.installed);
+		for (const plugin of installedPlugins) {
+			if (plugin.requirements?.includes(this.props.plugin.slug)) {
+				list.push(plugin.name);
+			}
+		}
+		return list;
 	}
 
 	canInstall() {
@@ -434,6 +508,7 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">
 							{!this.canInstall() && <span class="plugin-item-incompatible-info">(与 {this.incompatibleList().join('、')} 不兼容) </span>}
+							{!this.canDelete() && <span class="plugin-item-dependency-info">(被 {this.beingDependedByList().join('、')} 依赖) </span>}
 							{this.props.plugin.description}
 						</div>
 						<div className="plugin-item-metas">
@@ -483,7 +558,7 @@ class PluginItem extends React.Component {
 						) : null
 					}
 					{
-						this.props.plugin.type === 'lib' ? (
+						['lib', 'library', 'dependency', 'framework'].includes(this.props.plugin.type) ? (
 							<div className="plugin-item-state-indicator lib">
 								<Icon name="boxes" />
 							</div>

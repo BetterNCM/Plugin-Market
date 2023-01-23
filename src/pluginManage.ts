@@ -5,15 +5,15 @@ import { incPluginDownload } from "./analyze";
 export const baseURL = "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
 
 export async function installPlugin(plugin, onlinePlugins) {
-    incPluginDownload(plugin.slug,plugin.version);
+    incPluginDownload(plugin.slug, plugin.version);
 
+	console.log(`正在安装插件 ${plugin.slug}...`);
     
 	for (let requirement of (plugin.requirements ?? [])) {
 		if (loadedPlugins[requirement]) continue;
-
 		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
 		if (requiredPlugin) {
-			const result = await installPlugin(requiredPlugin);
+			const result = await installPlugin(requiredPlugin, onlinePlugins);
 			if (result != "success") return result;
 		} else {
 			return `${plugin.name} 的依赖 ${requiredPlugin} 解析失败！插件将不会安装`;
