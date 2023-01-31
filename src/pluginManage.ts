@@ -67,3 +67,14 @@ export const loadOnlinePlugins = async () => {
 	return await (await fetch(baseURL + "plugins.json?" + new Date().getTime())).json();
 }
 
+export async function openDevFolder(plugin) {
+	if (!loadedPlugins[plugin.slug]) {
+		return;
+	}
+	console.log();
+	betterncm.app.exec(
+		`explorer "${loadedPlugins[plugin.slug].pluginPath.replace(/\//g, "\\").replace("./", "")}"`,
+		false,
+		true,
+	);
+}

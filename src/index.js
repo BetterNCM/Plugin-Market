@@ -1,7 +1,7 @@
 import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
-import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL } from './pluginManage';
+import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL, openDevFolder } from './pluginManage';
 import { formatNumber, formatShortTime } from './utils';
 import './styles.scss'
 
@@ -31,7 +31,7 @@ class PluginList extends React.Component {
 			requireRestart: false,
 			category: 'all',
 			search: '',
-			sort_by: 'downloads',
+			sort_by: 'stars',
 			sort_order: 'desc',
 			devOptions: getConfig('devOptions', false),
 			showLibsTab: getConfig('showLibsTab', false),
@@ -146,7 +146,8 @@ class PluginList extends React.Component {
 						<input placeholder="搜索..." onChange={e => this.setState({ search: e.target.value })} />
 					</div>
 					<div className="plugin-market-filter-sort">
-						{this.state.pluginsAnalyzeData != {} && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download" /></button>}
+						{Object.keys(this.state.pluginsAnalyzeData).length !== 0 && <button title="下载量" className={`${this.state.sort_by === 'downloads' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('downloads')}><Icon name="download" /></button>}
+						<button title="Star 数" className={`${this.state.sort_by === 'stars' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('stars')}><Icon name="star" /></button>
 						<button title="更新时间" className={`${this.state.sort_by === 'update' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('update')}><Icon name="clock" /></button>
 						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz" /></button>
 					</div>
@@ -185,6 +186,8 @@ class PluginList extends React.Component {
 										case 'downloads':
 											return (this.state.pluginsAnalyzeData[a.slug] ?? 0) -
 												(this.state.pluginsAnalyzeData[b.slug] ?? 0);
+										case 'stars':
+											return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
 										case 'name':
 											return a.name > b.name ? 1 : -1;
 										case 'update':
@@ -360,7 +363,15 @@ class PluginItem extends React.Component {
 		}
 	}
 
+	isDev() {
+		if (loadedPlugins[this.props.plugin.slug]) {
+			return loadedPlugins[this.props.plugin.slug].devMode;
+		}
+		return false;
+	}
+
 	canDelete() {
+		if (this.isDev()) return false;
 		const installedPlugins = this.props.onlinePlugins.filter(v => v.installed);
 		for (const plugin of installedPlugins) {
 			if (plugin.requirements?.includes(this.props.plugin.slug)) {
@@ -432,17 +443,26 @@ class PluginItem extends React.Component {
 	getActionButtons() {
 		let buttons = [];
 		if (this.props.plugin.installed) {
-			buttons.push(
-				this.state.deleting ? (
-					<button className="plugin-action-button">
-						<Icon name="loading" className="spinning" />
+			if (this.isDev()) {
+				buttons.push(
+					<button className="plugin-action-button" onClick={() => { openDevFolder(this.props.plugin) }}>
+						<Icon name="folder" />
 					</button>
-				) : (
-					<button className={`plugin-action-button ${this.canDelete() ? '' : 'disabled'}`} onClick={() => { this.delete() }}>
-						<Icon name="delete" />
-					</button>
+				);
+			}
+			if (!this.isDev()){
+				buttons.push(
+					this.state.deleting ? (
+						<button className="plugin-action-button">
+							<Icon name="loading" className="spinning" />
+						</button>
+					) : (
+						<button className={`plugin-action-button ${this.canDelete() ? '' : 'disabled'}`} onClick={() => { this.delete() }}>
+							<Icon name="delete" />
+						</button>
+					)
 				)
-			)
+			}
 			if (this.hasSettings()) {
 				buttons.push(
 					<button className="plugin-action-button" onClick={() => { document.querySelector(`.better-ncm-manager .loaded-plugins-list .plugin-btn[data-plugin-slug='${this.props.plugin.slug}']`).click() }}>
@@ -450,7 +470,7 @@ class PluginItem extends React.Component {
 					</button>
 				)
 			}
-			if (this.props.plugin.hasUpdate) {
+			if (!this.isDev() && this.props.plugin.hasUpdate) {
 				buttons.push(
 					this.state.installing ? (
 						<button className="plugin-action-button">
@@ -508,7 +528,7 @@ class PluginItem extends React.Component {
 						</div>
 						<div className="plugin-item-description">
 							{!this.canInstall() && <span class="plugin-item-incompatible-info">(与 {this.incompatibleList().join('、')} 不兼容) </span>}
-							{!this.canDelete() && <span class="plugin-item-dependency-info">(被 {this.beingDependedByList().join('、')} 依赖) </span>}
+							{this.beingDependedByList().length > 0 && <span class="plugin-item-dependency-info">(被 {this.beingDependedByList().join('、')} 依赖) </span>}
 							{this.props.plugin.description}
 						</div>
 						<div className="plugin-item-metas">
@@ -528,6 +548,11 @@ class PluginItem extends React.Component {
 							<span className="plugin-item-meta plugin-item-update-time" title={`最后更新时间 (${new Date(this.props.plugin.update_time * 1000).toLocaleString('zh-cn')})`}>
 								<Icon name="clock"/> {formatShortTime(this.props.plugin.update_time)}
 							</span>
+
+							{
+								this.props.plugin.stars > 0 &&
+								<span className="plugin-item-meta plugin-stars" title={`Star 数${this.props.plugin.stars >= 1000 ? ` (${this.props.plugin.stars})` : ''}`}><Icon name="star" /><span>{formatNumber(this.props.plugin.stars)}</span></span>
+							}
 
 							{
 								this.props.plugin.repo &&
@@ -561,6 +586,13 @@ class PluginItem extends React.Component {
 						['lib', 'library', 'dependency', 'framework'].includes(this.props.plugin.type) ? (
 							<div className="plugin-item-state-indicator lib">
 								<Icon name="boxes" />
+							</div>
+						) : null
+					}
+					{
+						this.isDev() ? (
+							<div className="plugin-item-state-indicator dev">
+								<Icon name="dev" />
 							</div>
 						) : null
 					}
