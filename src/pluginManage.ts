@@ -10,7 +10,8 @@ export async function installPlugin(plugin, onlinePlugins) {
 	console.log(`正在安装插件 ${plugin.slug}...`);
     
 	for (let requirement of (plugin.requirements ?? [])) {
-		if (loadedPlugins[requirement]) continue;
+		//if (loadedPlugins[requirement]) continue;
+		if (loadedPlugins[requirement]?.version == onlinePlugins.find(plugin => plugin.slug === requirement).version) continue;
 		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
 		if (requiredPlugin) {
 			const result = await installPlugin(requiredPlugin, onlinePlugins);
@@ -31,7 +32,7 @@ export const getDependencies = (plugin, onlinePlugins) => {
 	for (let requirement of (plugin.requirements ?? [])) {
 		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
 		if (requiredPlugin) {
-			if (requiredPlugin.installed) continue;
+			//if (requiredPlugin.installed) continue;
 			dependencies.push(requirement);
 			let result = getDependencies(requiredPlugin, onlinePlugins);
 			if (result == null) {
@@ -77,4 +78,25 @@ export async function openDevFolder(plugin) {
 		false,
 		true,
 	);
+}
+
+export function calcBonusDownloads(plugin, pluginsAnalyzeData) {
+	const maxDownloads = Math.max(...Object.values(pluginsAnalyzeData));
+
+	const turningPoint = 100; // hours
+	const turningValue = 0.85;
+
+	if (!plugin.publish_time) return 0;
+
+	let hours = (new Date().getTime() - plugin.publish_time * 1000) / 1000 / 60 / 60;
+	hours = Math.max(0, hours);
+
+	return parseInt((() => {
+		// https://www.desmos.com/calculator/wzzpkgmwdh	
+		if (hours < turningPoint) {
+			return Math.pow((turningPoint - hours) / turningPoint, 6) * (1 - turningValue) + turningValue;
+		} else {
+			return turningValue * Math.pow(0.99, hours - turningPoint);
+		}
+	})() * maxDownloads);
 }
