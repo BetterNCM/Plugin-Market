@@ -679,6 +679,18 @@ class PluginItem extends React.Component {
 
 
 plugin.onConfig((tools) => {
+	const onThemeUpdate = () => {
+		if (!document.querySelector("#skin_default").href.includes("skin.ls.css")) {
+			document.body.classList.add("ncm-light-theme");
+		} else {
+			document.body.classList.remove("ncm-light-theme");
+		}
+	};
+	onThemeUpdate();
+	new MutationObserver(() => {
+		onThemeUpdate();
+	}).observe(document.getElementById('pri-skin-gride'), { attributes: true });
+
 	let dom = document.createElement('div');
 	ReactDOM.render(<PluginList />, dom);
 	return dom;

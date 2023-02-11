@@ -463,6 +463,8 @@
                     font-weight: bold;
                     box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
                     opacity: .9;
+                    display: flex;
+                    align-items: center;
                 }
             }
         }
@@ -718,5 +720,22 @@ body.plugins-have-update {
         div {
             margin-bottom: 10px;
         }
+    }
+}
+
+// light theme fix
+
+body.ncm-light-theme {
+    .plugin-market-filters .plugin-market-filter-sort>button {
+        border-color: #00000022;
+    }
+    .plugin-market-filters .plugin-market-filter-sort>button svg {
+        fill: #555;
+    }
+    .plugin-market-filters .plugin-market-filter-sort>button.active svg {
+        fill: #ddd;
+    }    
+    .reload-notice {
+        background: #fff;
     }
 }
