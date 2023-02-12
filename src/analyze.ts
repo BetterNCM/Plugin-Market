@@ -7,7 +7,7 @@ export type PluginDownloadInfomation = {
 }
 
 export async function getPluginDownloads() {
-    return await (await fetch(API_ENDPOINT + '/getPluginDownloads')).json() as PluginDownloadInfomation[]
+    return await (await fetch(API_ENDPOINT + '/getPluginDownloads' + new Date().getTime())).json() as PluginDownloadInfomation[]
 }
 
 export async function incPluginDownload(name: string, version: string, ncmUserID?: string) {
