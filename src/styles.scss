@@ -738,4 +738,18 @@ body.ncm-light-theme {
     .reload-notice {
         background: #fff;
     }
+    .plugin-market-filters .plugin-market-filter-search:focus-within > input, .plugin-market-filters .plugin-market-filter-search.filled > input {
+        color: rgba(0, 0, 0, 0.8) !important;
+    }
+    .plugin-market-filters .plugin-market-filter-search:focus-within, .plugin-market-filters .plugin-market-filter-search.filled {
+        border: 1px solid rgba(0, 0, 0, 0.133333333) !important;
+    }
+    .plugin-market-filters .plugin-market-filter-search:focus-within, .plugin-market-filters .plugin-market-filter-search.filled {
+        > input::placeholder {
+            color: #00000066;
+        }
+    }
+    .plugin-market-filters .plugin-market-filter-search > svg {
+        fill: #555 !important;
+    }
 }

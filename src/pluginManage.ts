@@ -40,7 +40,7 @@ export const getDependencies = (plugin, onlinePlugins) => {
 			}
 			dependencies = dependencies.concat(result);
 		} else {
-			return null;
+			return dependencies;
 		}
 	}
 
@@ -65,14 +65,23 @@ export async function deletePlugin(plugin) {
 }
 
 export const loadOnlinePlugins = async () => {
-	return await (await fetch(baseURL + "plugins.json?" + new Date().getTime())).json();
+	const json = await (await fetch(baseURL + "plugins.json?" + new Date().getTime())).json();
+	json.forEach(plugin => {
+		(plugin?.incompatible ?? []).forEach(incompatible => {
+			const incompatiblePlugin = json.find(plugin => plugin.slug === incompatible);
+			if (incompatiblePlugin) {
+				if (!incompatiblePlugin.incompatible) incompatiblePlugin.incompatible = [];
+				if (!incompatiblePlugin.incompatible.includes(plugin.slug)) incompatiblePlugin.incompatible.push(plugin.slug);
+			}
+		});
+	});
+	return json;
 }
 
 export async function openDevFolder(plugin) {
 	if (!loadedPlugins[plugin.slug]) {
 		return;
 	}
-	console.log();
 	betterncm.app.exec(
 		`explorer "${loadedPlugins[plugin.slug].pluginPath.replace(/\//g, "\\").replace("./", "")}"`,
 		false,

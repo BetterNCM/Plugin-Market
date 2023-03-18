@@ -3,6 +3,7 @@ import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL, openDevFolder, calcBonusDownloads } from './pluginManage';
 import { formatNumber, formatShortTime } from './utils';
+import { Flipper, Flipped } from "react-flip-toolkit";
 import './styles.scss'
 
 import selfManifest from './manifest.json';
@@ -124,6 +125,72 @@ class PluginList extends React.Component {
 				<div>加载插件中...</div>
 			</div>;
 		}
+
+		const filteredPlugins = this.state.onlinePlugins
+			.filter(
+				plugin => {
+					if (plugin.deprecated || plugin.hide) return false;
+					if (!plugin.betterncm_version) return true;
+					return satisfies(currentBetterNCMVersion, plugin.betterncm_version) || this.state.showVersionUnmatchedPlugins;
+				}
+			)
+			.filter(
+				plugin => {
+					if (this.state.category === 'all') return !(['lib', 'library', 'dependency', 'framework'].includes(plugin.type));
+					if (this.state.category === 'installed') return plugin.installed;
+					if (this.state.category === 'update') return plugin.hasUpdate;
+					if (this.state.category === 'lib') return ['lib', 'library', 'dependency', 'framework'].includes(plugin.type);
+					return this.state.category == (plugin.type ?? 'extension');
+				}
+			)
+			.filter(
+				plugin => {
+					if (!this.state.search) return true;
+					const name = plugin.name.toLowerCase();
+					const slug = plugin.slug.toLowerCase();
+					const author = plugin.author.toLowerCase();
+					return this.state.search.toLowerCase().trim().split(' ').every(
+						(s) => {
+							if (s.startsWith('author:')) {
+								return author.includes(s.slice(7));
+							}
+							return name.includes(s) || slug.includes(s) || author.includes(s);
+						}
+					);
+				}
+			)
+			.sort((a, b) => {
+				if (['lib', 'library', 'dependency', 'framework'].includes(a.type) ^ ['lib', 'library', 'dependency', 'framework'].includes(b.type)) {
+					return ['lib', 'library', 'dependency', 'framework'].includes(a.type) ? 1 : -1;
+				}
+				return (() => {
+					switch (this.state.sort_by) {
+						case 'composite':
+							if (Object.keys(this.state.pluginsAnalyzeData).length !== 0) {
+								return (
+									((this.state.pluginsAnalyzeData[a.slug] ?? 0) + calcBonusDownloads(a, this.state.pluginsAnalyzeData))
+									- 
+									((this.state.pluginsAnalyzeData[b.slug] ?? 0) + calcBonusDownloads(b, this.state.pluginsAnalyzeData))
+								);
+							} else {
+								return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
+							}
+						case 'downloads':
+							if (Object.keys(this.state.pluginsAnalyzeData).length !== 0) {
+								return (this.state.pluginsAnalyzeData[a.slug] ?? 0) - (this.state.pluginsAnalyzeData[b.slug] ?? 0)
+							} else {
+								return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
+							}
+						case 'stars':
+							return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
+						case 'name':
+							return a.name > b.name ? 1 : -1;
+						case 'update':
+							return a.update_time - b.update_time;
+					}
+				})() * (this.state.sort_order === 'asc' ? 1 : -1)
+			});
+
 		return (
 			<div>
 				<div className="plugin-market-filters">
@@ -155,85 +222,71 @@ class PluginList extends React.Component {
 						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz" /></button>
 					</div>
 				</div>
-				<div className="plugin-market-container">
-					{
-						this.state.onlinePlugins
-							.filter(
-								plugin => {
-									if (plugin.deprecated || plugin.hide) return false;
-									if (!plugin.betterncm_version) return true;
-									return satisfies(currentBetterNCMVersion, plugin.betterncm_version) || this.state.showVersionUnmatchedPlugins;
-								}
-							)
-							.filter(
-								plugin => {
-									if (this.state.category === 'all') return !(['lib', 'library', 'dependency', 'framework'].includes(plugin.type));
-									if (this.state.category === 'installed') return plugin.installed;
-									if (this.state.category === 'update') return plugin.hasUpdate;
-									if (this.state.category === 'lib') return ['lib', 'library', 'dependency', 'framework'].includes(plugin.type);
-									return this.state.category == (plugin.type ?? 'extension');
-								}
-							)
-							.filter(
-								plugin => {
-									if (!this.state.search) return true;
-									const search = this.state.search.toLowerCase();
-									return plugin.name.toLowerCase().includes(search) ||
-										plugin.slug.toLowerCase().includes(search) ||
-										plugin.author.toLowerCase().includes(search);
-								}
-							)
-							.sort((a, b) => {
-								return (() => {
-									switch (this.state.sort_by) {
-										case 'composite':
-											if (Object.keys(this.state.pluginsAnalyzeData).length !== 0) {
-												return (
-													((this.state.pluginsAnalyzeData[a.slug] ?? 0) + calcBonusDownloads(a, this.state.pluginsAnalyzeData))
-													- 
-													((this.state.pluginsAnalyzeData[b.slug] ?? 0) + calcBonusDownloads(b, this.state.pluginsAnalyzeData))
-												);
-											} else {
-												return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
-											}
-										case 'downloads':
-											if (Object.keys(this.state.pluginsAnalyzeData).length !== 0) {
-												return (this.state.pluginsAnalyzeData[a.slug] ?? 0) - (this.state.pluginsAnalyzeData[b.slug] ?? 0)
-											} else {
-												return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
-											}
-										case 'stars':
-											return (a.stars ?? 0) > (b.stars ?? 0) ? 1 : -1;
-										case 'name':
-											return a.name > b.name ? 1 : -1;
-										case 'update':
-											return a.update_time - b.update_time;
-									}
-								})() * (this.state.sort_order === 'asc' ? 1 : -1)
-							})
-							.sort((a, b) => {
-								if (a.type === 'lib' && b.type !== 'lib') return 1;
-								if (a.type !== 'lib' && b.type === 'lib') return -1;
-								return 0;
-							})
-							.map((plugin) => {
-								return <React.Fragment key={plugin.slug}>
-										<PluginItem
+    			<Flipper
+					flipKey={filteredPlugins.map(plugin => plugin.slug).join('')}
+					// duration 200
+					// easing ease
+					// spring="gentle"
+					staggerConfig={{
+						default: {
+							speed: 1000
+						}
+					}}
+					spring={{
+						stiffness: 322,
+						damping: 32
+					}}
+
+				>
+					<div className="plugin-market-container">
+							{
+								filteredPlugins.map((plugin) => {
+									return <React.Fragment key={plugin.slug}>
+										<Flipped
 											key={plugin.slug}
-											downloads={this.state.pluginsAnalyzeData[plugin.slug] ?? 0}
-											plugin={plugin}
-											onlinePlugins={this.state.onlinePlugins}
-											requireReload={this.requireReload}
-											setInstalled={this.setInstalled}
-											setHasUpdate={this.setHasUpdate}
-											updateNotificationBadge={this.updateNotificationBadge}
-											pluginsAnalyzeData={this.state.pluginsAnalyzeData}
-											showBonusDownloads={this.state.showBonusDownloads}
-										/>
-								</React.Fragment>
-							})
-					}
-				</div>
+											flipId={plugin.slug}
+											/*stagger*/
+											onAppear={(el, index) => {
+												el.animate([
+													{ opacity: 0, transform: 'scale(0.9)' },
+													{ opacity: 1, transform: 'scale(1)' }
+												], {
+													duration: 150,
+													easing: 'ease-out'
+												}).onfinish = () => el.style = '';
+											}}
+											onExit={(el, index, removeElement) => {
+												el.animate([
+													{ opacity: 1, transform: 'scale(1)' },
+													{ opacity: 0, transform: 'scale(0.9)' }
+												], {
+													duration: 150,
+													easing: 'ease-out'
+												}).onfinish = () => removeElement();
+											}}
+										>
+											{
+												flippedProps => 
+												<PluginItem
+													key={plugin.slug}
+													downloads={this.state.pluginsAnalyzeData[plugin.slug] ?? 0}
+													plugin={plugin}
+													onlinePlugins={this.state.onlinePlugins}
+													requireReload={this.requireReload}
+													setInstalled={this.setInstalled}
+													setHasUpdate={this.setHasUpdate}
+													updateNotificationBadge={this.updateNotificationBadge}
+													pluginsAnalyzeData={this.state.pluginsAnalyzeData}
+													showBonusDownloads={this.state.showBonusDownloads}
+													flippedProps={flippedProps}
+												/>
+											}
+										</Flipped>
+									</React.Fragment>
+								})
+							}
+					</div>
+				</Flipper>
 				{
 					this.state.requireReload ?
 						<div className="reload-notice">
@@ -570,7 +623,7 @@ class PluginItem extends React.Component {
 		}
 		const showCompatibilityInfo = (!this.canInstall() || this.beingDependedByList().length > 0 || this.dependencyList().length > 0);
 		return (
-			<div className="plugin-item-wrapper">
+			<div className="plugin-item-wrapper" {...this.props.flippedProps}>
 				<div className={`plugin-item ${this.state.installing ? 'installing' : ''} ${this.state.deleting ? 'deleting' : ''} ${showCompatibilityInfo ? 'with-compatibility-info' : ''}`}>
 					<div className="plugin-item-preview" style={{ 'backgroundImage': `url(${preview})` }} />
 					<div className="plugin-item-body">
