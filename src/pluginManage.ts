@@ -11,7 +11,8 @@ export async function installPlugin(plugin, onlinePlugins) {
     
 	for (let requirement of (plugin.requirements ?? [])) {
 		//if (loadedPlugins[requirement]) continue;
-		if (loadedPlugins[requirement]?.version == onlinePlugins.find(plugin => plugin.slug === requirement).version) continue;
+		console.log(requirement);
+		if (loadedPlugins[requirement]?.version == onlinePlugins.find(plugin => plugin.slug === requirement)?.version) continue;
 		let requiredPlugin = onlinePlugins.find(plugin => plugin.slug === requirement);
 		if (requiredPlugin) {
 			const result = await installPlugin(requiredPlugin, onlinePlugins);
