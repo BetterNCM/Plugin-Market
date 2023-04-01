@@ -4,6 +4,8 @@
     "version": "0.5.1",
     "author": "BetterNCM",
     "hide": true,
+    "force-install": true,
+    "force-update": "<0.5.1",
     "injects": {
         "Main": [
             {
