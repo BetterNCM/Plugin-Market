@@ -1,8 +1,20 @@
 // @ts-nocheck
 
 import { incPluginDownload } from "./analyze";
+import { getSetting, setSetting } from './utils';
 
-export const baseURL = "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
+export const getBaseURL = () => {
+	const option = getSetting('source', 'gitee');
+	if (option === 'gitee') {
+		return "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
+	} else if (option === 'github_usercontent') {
+		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
+	} else if (option === 'github_raw') {
+		return "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/";
+	} else if (option === 'custom') {
+		return getSetting('custom-source', '');
+	}
+}
 
 export async function installPlugin(plugin, onlinePlugins) {
     incPluginDownload(plugin.slug, plugin.version);
@@ -22,7 +34,7 @@ export async function installPlugin(plugin, onlinePlugins) {
 		}
 	}
 
-	await betterncm.fs.writeFile("./plugins/" + plugin.file, await (await fetch(baseURL + plugin['file-url'])).blob());
+	await betterncm.fs.writeFile("./plugins/" + plugin.file, await (await fetch(getBaseURL() + plugin['file-url'])).blob());
 
 	return "success";
 }
@@ -65,8 +77,25 @@ export async function deletePlugin(plugin) {
 	return "未找到插件路径，卸载失败";
 }
 
+export const fetchAbortController = new class {
+	constructor() {
+		this.controller = new AbortController();
+		this.abort = this.abort.bind(this);
+	}
+	abort() {
+		this.controller.abort();
+		this.controller = new AbortController();		
+	}
+}
+
 export const loadOnlinePlugins = async () => {
-	const json = await (await fetch(baseURL + "plugins.json?" + new Date().getTime())).json();
+	let response = await fetch(getBaseURL() + "plugins.json?" + new Date().getTime(), {
+		signal: fetchAbortController.controller.signal,
+	});
+	if (!response.ok) {
+		throw new Error(response.status + " " + response.statusText);
+	}
+	const json = await response.json();
 	json.forEach(plugin => {
 		(plugin?.incompatible ?? []).forEach(incompatible => {
 			const incompatiblePlugin = json.find(plugin => plugin.slug === incompatible);

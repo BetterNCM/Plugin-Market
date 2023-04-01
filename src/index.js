@@ -1,8 +1,8 @@
 import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
-import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, baseURL, openDevFolder, calcBonusDownloads } from './pluginManage';
-import { formatNumber, formatShortTime } from './utils';
+import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, getBaseURL, openDevFolder, calcBonusDownloads, fetchAbortController } from './pluginManage';
+import { formatNumber, formatShortTime, getSetting, setSetting } from './utils';
 import { Flipper, Flipped } from "react-flip-toolkit";
 import './styles.scss'
 
@@ -27,6 +27,7 @@ class PluginList extends React.Component {
 		super(props);
 		this.state = {
 			onlinePlugins: null,
+			errorMsg: null,
 			pluginsAnalyzeData: {},
 			requireReload: false,
 			requireRestart: false,
@@ -46,6 +47,17 @@ class PluginList extends React.Component {
 	}
 
 	async componentDidMount() {
+		this.init();
+		this.props.refresh.current = () => {
+			fetchAbortController.abort();
+			this.setState({
+				onlinePlugins: null
+			}, () => this.init(false));
+		}
+	}
+
+	async init(reloadDownloads = true) {
+		this.state.errorMsg = null;
 		loadOnlinePlugins().then(
 			onlinePlugins => {
 				onlinePlugins = onlinePlugins.map(plugin => {
@@ -56,7 +68,16 @@ class PluginList extends React.Component {
 				}).filter(plugin => !(plugin.deprecated || plugin.hide));
 				this.setState({ onlinePlugins });
 				this.updateNotificationBadge();
-			});
+		}).catch(
+			error => {
+				if (error.message == 'The user aborted a request.') return;
+				if (!getBaseURL().match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/)) {
+					error.message = '请检查插件源地址是否正确\n' + error.message;
+				}
+				this.setState({ errorMsg: error.message });
+			}
+		);
+		if (!reloadDownloads) return;
 		getPluginDownloads().then(
 			pluginsAnalyzeData => {
 				let dict = {};
@@ -120,9 +141,35 @@ class PluginList extends React.Component {
 
 	render() {
 		if (!this.state.onlinePlugins) {
+			if (this.state.errorMsg) {
+				return <div className="plugin-market-container loading error">
+					<Icon name="warning" />
+					<div>加载失败</div>
+					{
+						this.state.errorMsg.split('\n').map((line, i) => <div key={i}>{line}</div>)
+					}
+					<div className="error-actions">
+						<button onClick={() => {
+							this.setState({
+								onlinePlugins: null,
+								pluginsAnalyzeData: {}
+							}, () => this.init());
+						}}>重试</button>
+						<button className="settings" onClick={() => {
+							this.props.openSettings();
+						}}>设置</button>
+					</div>
+						
+				</div>;
+			}
 			return <div className="plugin-market-container loading">
 				<Icon name="loading" className="spinning" />
 				<div>加载插件中...</div>
+				<div className="loading-actions">
+					<button className="settings" onClick={() => {
+						this.props.openSettings();
+					}}>设置</button>
+				</div>
 			</div>;
 		}
 
@@ -200,7 +247,7 @@ class PluginList extends React.Component {
 								this.setState({
 									onlinePlugins: null,
 									pluginsAnalyzeData: {}
-								}, () => this.componentDidMount());
+								}, () => this.init());
 							}
 							this.setState({ category: 'all' })
 						}}>全部</button>
@@ -209,6 +256,7 @@ class PluginList extends React.Component {
 						{this.state.showLibsTab && this.state.devOptions && <button className={this.state.category === 'lib' ? 'active' : ''} onClick={() => this.setState({ category: 'lib' })}>依赖库</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={() => this.setState({ category: 'update' })}>有更新</button>}
+						<button className='settings' onClick={() => this.props.openSettings()}><Icon name='settings'/></button>
 					</div>
 					<div className={`plugin-market-filter-search ${this.state.search ? 'filled' : ''}`}>
 						<Icon name="search" />
@@ -224,9 +272,6 @@ class PluginList extends React.Component {
 				</div>
     			<Flipper
 					flipKey={filteredPlugins.map(plugin => plugin.slug).join('')}
-					// duration 200
-					// easing ease
-					// spring="gentle"
 					staggerConfig={{
 						default: {
 							speed: 1000
@@ -236,7 +281,6 @@ class PluginList extends React.Component {
 						stiffness: 322,
 						damping: 32
 					}}
-
 				>
 					<div className="plugin-market-container">
 							{
@@ -343,7 +387,7 @@ class PluginList extends React.Component {
 								this.setState({
 									onlinePlugins: null,
 									pluginsAnalyzeData: {}
-								}, () => this.componentDidMount());
+								}, () => this.init());
 							}}>重载插件列表</a>
 							<a className="u-ibtn5 u-ibtnsz8" onClick={() => {
 								console.log(this.state.onlinePlugins);
@@ -611,7 +655,7 @@ class PluginItem extends React.Component {
 
 
 	render() {
-		let preview = this.props.plugin.preview ? baseURL + this.props.plugin.preview : "unset";
+		let preview = this.props.plugin.preview ? getBaseURL() + this.props.plugin.preview : "unset";
 		let authorLink = this.props.plugin['author_link'] ?? (this.props.plugin['author_links'] ?? [])[0] ?? null;
 		if (authorLink) {
 			if (!authorLink.startsWith('http')) {
@@ -729,8 +773,114 @@ class PluginItem extends React.Component {
 	}
 }
 
+function Settings(props) {
+	const [source, setSource] = React.useState(getSetting('source', 'gitee'));
+	const [customSource, setCustomSource] = React.useState(getSetting('custom-source', ''));
+
+	React.useEffect(() => {
+		betterncm.app.writeConfig('cc.microblock.pluginmarket.source', getBaseURL());
+	}, [source, customSource]);
+
+	return (
+		<div className="plugin-market-settings-container">
+			<div className="plugin-market-settings">
+				<div className="plugin-market-settings-header">
+					<div className="plugin-market-settings-title">设置</div>
+					<button className="plugin-market-settings-button" onClick={() => {
+						props.closeSettings();
+					}}><Icon name="close"/></button>
+				</div>
+				<div className="plugin-market-settings-content">
+					<div className="plugin-market-settings-item">
+						<div className="plugin-market-settings-item-title">插件源</div>
+						<div className="plugin-market-settings-item-content">
+							<div class="plugin-market-settings-radio">
+								<label>
+									<input type="radio" name="radio" checked={source === 'gitee'} onChange={() => {
+										setSource('gitee');
+										setSetting('source', 'gitee');
+										props.refresh.current();
+									}}/>
+									<span>Gitee</span>
+								</label>
+								<label>
+									<input type="radio" name="radio" checked={source === 'github_usercontent'} onChange={() => {
+										setSource('github_usercontent');
+										setSetting('source', 'github_usercontent');
+										props.refresh.current();
+									}}/>
+									<span>Github (UserContent)</span>
+								</label>
+								<label>
+									<input type="radio" name="radio" checked={source === 'github_raw'} onChange={() => {
+										setSource('github_raw');
+										setSetting('source', 'github_raw');
+										props.refresh.current();
+									}}/>
+									<span>Github (Raw)</span>
+								</label>
+								<label>
+									<input type="radio" name="radio" checked={source === 'custom'} onChange={() => {
+										setSource('custom');
+										setSetting('source', 'custom');
+										props.refresh.current();
+									}}/>
+									<span>自定义</span>
+								</label>
+							</div>
+							{
+								source === 'custom' && (
+									<div className="plugin-market-settings-input plugin-market-settings-item-custom-source">
+										<input
+											className={`
+												${customSource.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) ? 'valid' : 'invalid'}
+												${customSource === '' ? 'empty' : ''}
+											`}
+											type="text"
+											placeholder="自定义地址"
+											value={customSource}
+											onBlur={(e) => {
+												if (e.target.value.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) && !e.target.value.endsWith('/')) {
+													e.target.value += '/';
+												}
+												const oldCustomSource = getSetting('custom-source', '');
+												setCustomSource(e.target.value);
+												setSetting('custom-source', e.target.value);
+												if (oldCustomSource !== e.target.value) {
+													props.refresh.current();
+												}
+											}}
+											onChange={(e) => {
+												setCustomSource(e.target.value);
+											}}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') {
+													e.target.blur();
+												}
+											}}/>
+									</div>
+								)
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
 
 
+function Container (props) {
+	const [showSettings, setShowSettings] = React.useState(false);
+	const refresh = React.useRef(false);
+	
+	return (
+		<div className="plugin-market-root">
+			{showSettings && <Settings closeSettings={() => setShowSettings(false)} refresh={refresh}/>}
+			<PluginList openSettings={() => setShowSettings(true)} refresh={refresh} />
+		</div>
+	)
+}
 plugin.onConfig((tools) => {
 	const onThemeUpdate = () => {
 		if (!document.querySelector("#skin_default").href.includes("skin.ls.css")) {
@@ -745,6 +895,6 @@ plugin.onConfig((tools) => {
 	}).observe(document.getElementById('pri-skin-gride'), { attributes: true });
 
 	let dom = document.createElement('div');
-	ReactDOM.render(<PluginList />, dom);
+	ReactDOM.render(<Container />, dom);
 	return dom;
 });

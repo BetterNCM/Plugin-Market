@@ -18,3 +18,21 @@ export const formatShortTime = (unix) => {
 	}
 	return `${year.toString().slice(2)}/${month}/${day}`;
 }
+
+export const getSetting = (option, defaultValue = '') => {
+	option = "plugin-market-" + option;
+	let value = localStorage.getItem(option);
+	if (!value) {
+		value = defaultValue;
+	}
+	if (value === 'true') {
+		value = true;
+	} else if (value === 'false') {
+		value = false;
+	}
+	return value;
+}
+export const setSetting = (option, value) => {
+	option = "plugin-market-" + option;
+	localStorage.setItem(option, value);
+}
