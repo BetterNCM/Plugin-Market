@@ -19,6 +19,21 @@ const getConfig = (key, defaultValue) => {
 	return JSON.parse(value);
 };
 
+plugin.onLoad(()=>{
+	betterncm.utils.waitForElement('#pri-skin-gride').then(ele=>{
+		const onThemeUpdate = () => {
+			if (!document.querySelector("#skin_default, #skin_less").href.includes("skin.ls.css")) {
+				document.body.classList.add("ncm-light-theme");
+			} else {
+				document.body.classList.remove("ncm-light-theme");
+			}
+		};
+		onThemeUpdate();
+		new MutationObserver(() => {
+			onThemeUpdate();
+		}).observe(ele, { attributes: true });
+	});
+});
 
 let currentBetterNCMVersion = await betterncm.app.getBetterNCMVersion();
 
@@ -882,18 +897,6 @@ function Container (props) {
 	)
 }
 plugin.onConfig((tools) => {
-	const onThemeUpdate = () => {
-		if (!document.querySelector("#skin_default, #skin_less").href.includes("skin.ls.css")) {
-			document.body.classList.add("ncm-light-theme");
-		} else {
-			document.body.classList.remove("ncm-light-theme");
-		}
-	};
-	onThemeUpdate();
-	new MutationObserver(() => {
-		onThemeUpdate();
-	}).observe(document.getElementById('pri-skin-gride'), { attributes: true });
-
 	let dom = document.createElement('div');
 	ReactDOM.render(<Container />, dom);
 	return dom;
