@@ -883,7 +883,7 @@ function Container (props) {
 }
 plugin.onConfig((tools) => {
 	const onThemeUpdate = () => {
-		if (!document.querySelector("#skin_default").href.includes("skin.ls.css")) {
+		if (!document.querySelector("#skin_default, #skin_less").href.includes("skin.ls.css")) {
 			document.body.classList.add("ncm-light-theme");
 		} else {
 			document.body.classList.remove("ncm-light-theme");
