@@ -966,7 +966,7 @@ function Settings(props) {
 	)
 }
 function UrlInput(props) {
-	const [url, setUrl] = React.useState('');
+	const [url, setUrl] = React.useState(props.value);
 	const lastValue = React.useRef(props.value);
 	return (
 		<input
