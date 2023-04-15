@@ -111,8 +111,6 @@ export const loadOnlinePlugins = async (updatedUrls = undefined) => {
 	let urls = [getBaseURL()];
 	urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')));
 
-	console.log(urls, JSON.parse(JSON.stringify(urlCache)));
-
 	const responses = await Promise.all(urls.map(url => 
 		requestPluginsFromUrl(
 			url,
