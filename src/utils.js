@@ -36,3 +36,12 @@ export const setSetting = (option, value) => {
 	option = "plugin-market-" + option;
 	localStorage.setItem(option, value);
 }
+
+export const useRefState = (initialValue) => {
+	const [value, setValue] = React.useState(initialValue);
+	const ref = React.useRef(value);
+	React.useEffect(() => {
+		ref.current = value;
+	}, [value]);
+	return [value, setValue, ref];
+}

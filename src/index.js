@@ -2,7 +2,7 @@ import { compareVersions, satisfies } from 'compare-versions';
 import { getPluginDownloads } from './analyze';
 import { Icon } from './icons';
 import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, getBaseURL, openDevFolder, calcBonusDownloads, fetchAbortController } from './pluginManage';
-import { formatNumber, formatShortTime, getSetting, setSetting } from './utils';
+import { formatNumber, formatShortTime, getSetting, setSetting, useRefState } from './utils';
 import { Flipper, Flipped } from "react-flip-toolkit";
 import './styles.scss'
 
@@ -63,17 +63,17 @@ class PluginList extends React.Component {
 
 	async componentDidMount() {
 		this.init();
-		this.props.refresh.current = () => {
+		this.props.refresh.current = (updatedUrls = null) => {
 			fetchAbortController.abort();
 			this.setState({
 				onlinePlugins: null
-			}, () => this.init(false));
+			}, () => this.init(false, updatedUrls));
 		}
 	}
 
-	async init(reloadDownloads = true) {
+	async init(reloadDownloads = true, updatedUrls = null) {
 		this.state.errorMsg = null;
-		loadOnlinePlugins().then(
+		loadOnlinePlugins(updatedUrls).then(
 			onlinePlugins => {
 				onlinePlugins = onlinePlugins.map(plugin => {
 					plugin.installed = !!loadedPlugins[plugin.slug];
@@ -670,7 +670,7 @@ class PluginItem extends React.Component {
 
 
 	render() {
-		let preview = this.props.plugin.preview ? getBaseURL() + this.props.plugin.preview : "unset";
+		let preview = this.props.plugin.preview ? this.props.plugin.source + this.props.plugin.preview : "unset";
 		let authorLink = this.props.plugin['author_link'] ?? (this.props.plugin['author_links'] ?? [])[0] ?? null;
 		if (authorLink) {
 			if (!authorLink.startsWith('http')) {
@@ -796,6 +796,13 @@ function Settings(props) {
 		betterncm.app.writeConfig('cc.microblock.pluginmarket.source', getBaseURL());
 	}, [source, customSource]);
 
+	const [additionalSources, setAdditionalSources, _additionalSources] = useRefState(JSON.parse(getSetting('additional-sources', '[]')));
+	const additionalSourcesChanged = (changedAdditionalSources) => {
+		setAdditionalSources(changedAdditionalSources);
+		const filteredSources = changedAdditionalSources.filter((source) => source.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) !== null);
+		setSetting('additional-sources', JSON.stringify(filteredSources));
+	};
+
 	return (
 		<div className="plugin-market-settings-container">
 			<div className="plugin-market-settings">
@@ -814,7 +821,7 @@ function Settings(props) {
 									<input type="radio" name="radio" checked={source === 'gitee'} onChange={() => {
 										setSource('gitee');
 										setSetting('source', 'gitee');
-										props.refresh.current();
+										props.refresh.current([getBaseURL()]);
 									}}/>
 									<span>Gitee</span>
 								</label>
@@ -822,7 +829,7 @@ function Settings(props) {
 									<input type="radio" name="radio" checked={source === 'github_usercontent'} onChange={() => {
 										setSource('github_usercontent');
 										setSetting('source', 'github_usercontent');
-										props.refresh.current();
+										props.refresh.current([getBaseURL()]);
 									}}/>
 									<span>Github (UserContent)</span>
 								</label>
@@ -830,7 +837,7 @@ function Settings(props) {
 									<input type="radio" name="radio" checked={source === 'github_raw'} onChange={() => {
 										setSource('github_raw');
 										setSetting('source', 'github_raw');
-										props.refresh.current();
+										props.refresh.current([getBaseURL()]);
 									}}/>
 									<span>Github (Raw)</span>
 								</label>
@@ -838,7 +845,7 @@ function Settings(props) {
 									<input type="radio" name="radio" checked={source === 'custom'} onChange={() => {
 										setSource('custom');
 										setSetting('source', 'custom');
-										props.refresh.current();
+										props.refresh.current([getBaseURL()]);
 									}}/>
 									<span>自定义</span>
 								</label>
@@ -878,9 +885,117 @@ function Settings(props) {
 							}
 						</div>
 					</div>
+
+					<div className="plugin-market-settings-item">
+						<div className="plugin-market-settings-item-title">附加源</div>
+						<div className="plugin-market-settings-item-content">
+							<div class="plugin-market-settings-additional-sources">
+								{
+									additionalSources.map((source, index) => (
+										<div className="plugin-market-settings-additional-source-item">
+											<div class="plugin-market-settings-input">
+												<UrlInput
+													className="plugin-market-settings-additional-source-input"
+													placeholder="附加源地址"
+													value={source}
+													onBlur={(e, valueChanged) => {
+														if (e.target.value.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) && !e.target.value.endsWith('/')) {
+															e.target.value += '/';
+														}
+														const newAdditionalSources = [...additionalSources];
+														newAdditionalSources[index] = e.target.value;
+														additionalSourcesChanged(newAdditionalSources);
+														if (valueChanged) {
+															props.refresh.current([e.target.value]);
+														}
+													}}
+													onChange={(e) => {
+														const newAdditionalSources = [...additionalSources];
+														newAdditionalSources[index] = e.target.value;
+														setAdditionalSources(newAdditionalSources);
+													}}
+												/>
+											</div>
+											<button
+												className="plugin-market-settings-additional-source-move-up" 
+												disabled={index === 0}
+												onClick={() => {
+													const newAdditionalSources = [...additionalSources];
+													const temp = newAdditionalSources[index];
+													newAdditionalSources[index] = newAdditionalSources[index - 1];
+													newAdditionalSources[index - 1] = temp;
+													additionalSourcesChanged(newAdditionalSources);
+													props.refresh.current([]);
+												}}>
+													<Icon name="move_up"/>
+											</button>
+											<button 
+												className="plugin-market-settings-additional-source-move-down"
+												disabled={index === additionalSources.length - 1}
+												onClick={() => {
+													const newAdditionalSources = [...additionalSources];
+													const temp = newAdditionalSources[index];
+													newAdditionalSources[index] = newAdditionalSources[index + 1];
+													newAdditionalSources[index + 1] = temp;
+													additionalSourcesChanged(newAdditionalSources);
+													props.refresh.current([]);
+												}}>
+													<Icon name="move_down"/>
+											</button>
+											<button className="plugin-market-settings-additional-source-remove" onClick={() => {
+												const newAdditionalSources = [...additionalSources];
+												newAdditionalSources.splice(index, 1);
+												additionalSourcesChanged(newAdditionalSources);
+												props.refresh.current([]);
+											}
+											}><Icon name="close"/></button>
+										</div>
+									))
+								}
+								<button className="plugin-market-settings-additional-source-add" onClick={() => {
+									const newAdditionalSources = [...additionalSources];
+									newAdditionalSources.push('');
+									additionalSourcesChanged(newAdditionalSources);
+								}}><Icon name="add"/> 添加</button>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
+	)
+}
+function UrlInput(props) {
+	const [url, setUrl] = React.useState('');
+	const lastValue = React.useRef(props.value);
+	return (
+		<input
+			className={`
+				${props.className || ''}
+				${url.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) ? 'valid' : 'invalid'}
+				${url === '' ? 'empty' : ''}
+			`}
+			type="text"
+			{...props.placeholder ? {placeholder: props.placeholder} : {}}
+			value={props.value}
+			onBlur={(e) => {
+				if (!props.onBlur) return;
+				const valueChanged = lastValue.current !== e.target.value;
+				lastValue.current = e.target.value;
+				props.onBlur(e, valueChanged);
+			}}
+			onChange={(e) => {
+				setUrl(e.target.value);
+
+				if (!props.onChange) return;
+				props.onChange(e);
+			}}
+			onKeyDown={(e) => {
+				if (e.key === 'Enter') {
+					e.target.blur();
+				}
+			}}
+		/>
 	)
 }
 

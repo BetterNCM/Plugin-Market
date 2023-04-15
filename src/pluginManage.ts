@@ -34,7 +34,7 @@ export async function installPlugin(plugin, onlinePlugins) {
 		}
 	}
 
-	await betterncm.fs.writeFile("./plugins/" + plugin.file, await (await fetch(getBaseURL() + plugin['file-url'])).blob());
+	await betterncm.fs.writeFile("./plugins/" + plugin.file, await (await fetch(plugin.source + plugin['file-url'])).blob());
 
 	return "success";
 }
@@ -88,24 +88,73 @@ export const fetchAbortController = new class {
 	}
 }
 
-export const loadOnlinePlugins = async () => {
-	let response = await fetch(getBaseURL() + "plugins.json?" + new Date().getTime(), {
+const urlCache = {};
+const requestPluginsFromUrl = async (url, fromCache = false) => {
+	if (fromCache && urlCache[url]) {
+		return urlCache[url];
+	}
+	let response = await fetch(url + "plugins.json?" + new Date().getTime(), {
 		signal: fetchAbortController.controller.signal,
 	});
-	if (!response.ok) {
-		throw new Error(response.status + " " + response.statusText);
+	if (response.ok) {
+		const json = await response.json();
+		response.parsedJson = json;
+		urlCache[url] = response;
 	}
-	const json = await response.json();
-	json.forEach(plugin => {
+	return response;
+}
+
+export const loadOnlinePlugins = async (updatedUrls = undefined) => {
+	// if updatedUrls is undefined, all urls will be requested
+	// or else, only the urls in updatedUrls will be requested
+
+	let urls = [getBaseURL()];
+	urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')));
+
+	console.log(urls, JSON.parse(JSON.stringify(urlCache)));
+
+	const responses = await Promise.all(urls.map(url => 
+		requestPluginsFromUrl(
+			url,
+			updatedUrls == undefined ? false : !updatedUrls.includes(url)
+		)
+	));
+
+	let errorText = '';
+	for (let response of responses) {
+		if (!response.ok) {
+			errorText += `Requesting ${response.url.replace(/\?\d+$/, '')} failed: ${response.status} ${response.statusText}\n`
+		}
+	}
+	if (errorText) {
+		throw new Error(errorText);
+	}
+
+	const jsons = await Promise.all(responses.map(response => response.parsedJson));
+
+	let plugins = [];
+	for (let [index, json] of jsons.entries()) {
+		for (let plugin of json) {
+			if (plugins.find(p => p.slug === plugin.slug)) {
+				console.warn(`Duplicate plugin ${plugin.slug} found in ${urls[index]} with the plugin in ${plugins.findIndex(p => p.slug === plugin.slug).source}`);
+				continue;
+			}
+			plugin.source = urls[index];
+			plugins.push(plugin);
+		}
+	}
+
+	plugins.forEach(plugin => {
 		(plugin?.incompatible ?? []).forEach(incompatible => {
-			const incompatiblePlugin = json.find(plugin => plugin.slug === incompatible);
+			const incompatiblePlugin = plugins.find(plugin => plugin.slug === incompatible);
 			if (incompatiblePlugin) {
 				if (!incompatiblePlugin.incompatible) incompatiblePlugin.incompatible = [];
 				if (!incompatiblePlugin.incompatible.includes(plugin.slug)) incompatiblePlugin.incompatible.push(plugin.slug);
 			}
 		});
 	});
-	return json;
+
+	return plugins;
 }
 
 export async function openDevFolder(plugin) {
