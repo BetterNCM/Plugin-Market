@@ -865,6 +865,9 @@ body.plugins-have-update {
         padding: 5px 10px;
         width: 100%;
         line-height: 100%;
+        &[disabled] {
+            color: rgba(var(--contrast-rgb), .5);
+        }
         &:focus {
             border: #ec4141 2px solid;
             margin: 0;

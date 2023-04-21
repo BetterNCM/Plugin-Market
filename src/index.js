@@ -20,6 +20,80 @@ const getConfig = (key, defaultValue) => {
 };
 
 plugin.onLoad(()=>{
+	plugin.mainPlugin.getMainSource = () => {
+		return getBaseURL();
+	};
+	plugin.mainPlugin.getAdditionalSources = () => {
+		return JSON.parse(getSetting('additional-sources', '[]'));
+	};
+	plugin.mainPlugin.getTemporaryAdditionalSources = () => {
+		return window.pluginMarketTemporaryAdditionalSources ?? [];
+	};
+	plugin.mainPlugin.getAllSources = () => {
+		let urls = [getBaseURL()];
+		urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
+		urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
+		return urls;
+	};
+	plugin.mainPlugin.addCustomSource = (url, position = -1) => {
+		if (!url.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/)) {
+			throw new Error('Invalid URL');
+		}
+		if (!url.endsWith('/')) {
+			url += '/';
+		}
+
+		const additionalSources = JSON.parse(getSetting('additional-sources', '[]'));
+		if (additionalSources.indexOf(url) !== -1) {
+			return;
+		}
+		if (position !== -1) position = Math.min(Math.max(position, 0), additionalSources);
+		if (position === -1) {
+			additionalSources.push(url);
+		} else {
+			additionalSources.splice(position, 0, newSource);
+		}
+
+		setSetting('additional-sources', JSON.stringify(additionalSources));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
+			url: url
+		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh-additional-sources'));
+	};
+	plugin.mainPlugin.addTemporaryCustomSource = (url) => {
+		if (!url.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/)) {
+			throw new Error('Invalid URL');
+		}
+		if (!url.endsWith('/')) {
+			url += '/';
+		}
+
+		const temporaryAdditionalSources = window.pluginMarketTemporaryAdditionalSources ?? [];
+		if (temporaryAdditionalSources.indexOf(url) !== -1) {
+			return;
+		}
+		temporaryAdditionalSources.push(url);
+		window.pluginMarketTemporaryAdditionalSources = temporaryAdditionalSources;
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
+			url: url
+		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh-temporary-additional-sources'));
+	};
+	plugin.mainPlugin.removeTemporaryCustomSource = (url) => {
+		if (!url.endsWith('/')) {
+			url += '/';
+		}
+		
+		const temporaryAdditionalSources = window.pluginMarketTemporaryAdditionalSources ?? [];
+		const newTemporaryAdditionalSources = temporaryAdditionalSources.filter((s) => s !== url);
+		window.pluginMarketTemporaryAdditionalSources = newTemporaryAdditionalSources;
+
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
+			url: null
+		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh-temporary-additional-sources'));
+	};
+
 	betterncm.utils.waitForElement('#pri-skin-gride').then(ele=>{
 		const onThemeUpdate = () => {
 			if (!document.querySelector("#skin_default, #skin_less").href.includes("skin.ls.css")) {
@@ -32,7 +106,7 @@ plugin.onLoad(()=>{
 		new MutationObserver(() => {
 			onThemeUpdate();
 		}).observe(ele, { attributes: true });
-	});
+	});		
 });
 
 let currentBetterNCMVersion = await betterncm.app.getBetterNCMVersion();
@@ -802,6 +876,23 @@ function Settings(props) {
 		const filteredSources = changedAdditionalSources.filter((source) => source.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) !== null);
 		setSetting('additional-sources', JSON.stringify(filteredSources));
 	};
+	
+	const [temporaryAdditionalSources, setTemporaryAdditionalSources] = React.useState(window.pluginMarketTemporaryAdditionalSources ?? []);
+
+	React.useEffect(() => {
+		const onRefreshAdditionalSources = () => {
+			setAdditionalSources(JSON.parse(getSetting('additional-sources', '[]')));
+		};
+		const onRefreshTemporaryAdditionalSources = () => {
+			setTemporaryAdditionalSources([...(window.pluginMarketTemporaryAdditionalSources ?? [])]);
+		};
+		document.addEventListener('plugin-market-refresh-additional-sources', onRefreshAdditionalSources);
+		document.addEventListener('plugin-market-refresh-temporary-additional-sources', onRefreshTemporaryAdditionalSources);
+		return () => {
+			document.removeEventListener('plugin-market-refresh-additional-sources', onRefreshAdditionalSources);
+			document.removeEventListener('plugin-market-refresh-temporary-additional-sources', onRefreshTemporaryAdditionalSources);
+		};
+	}, []);
 
 	return (
 		<div className="plugin-market-settings-container">
@@ -960,6 +1051,40 @@ function Settings(props) {
 							</div>
 						</div>
 					</div>
+					
+					{
+						temporaryAdditionalSources?.length > 0 && (
+							<div className="plugin-market-settings-item">
+								<div className="plugin-market-settings-item-title">由插件添加的源</div>
+								<div className="plugin-market-settings-item-content">
+									<div class="plugin-market-settings-additional-sources">
+										{
+											temporaryAdditionalSources.map((source, index) => (
+												<div className="plugin-market-settings-additional-source-item">
+													<div class="plugin-market-settings-input">
+														<UrlInput
+															className="plugin-market-settings-additional-source-input"
+															placeholder="附加源地址"
+															value={source}
+															disabled={true}
+														/>
+													</div>
+													<button className="plugin-market-settings-additional-source-remove" onClick={() => {
+														const newTemporaryAdditionalSources = [...temporaryAdditionalSources];
+														newTemporaryAdditionalSources.splice(index, 1);
+														setTemporaryAdditionalSources(newTemporaryAdditionalSources);
+														window.pluginMarketTemporaryAdditionalSources = newTemporaryAdditionalSources;
+														props.refresh.current([]);
+													}
+													}><Icon name="close"/></button>
+												</div>
+											))
+										}
+									</div>
+								</div>
+							</div>
+						)
+					}
 				</div>
 			</div>
 		</div>
@@ -977,6 +1102,7 @@ function UrlInput(props) {
 			`}
 			type="text"
 			{...props.placeholder ? {placeholder: props.placeholder} : {}}
+			{...props.disabled ? {disabled: props.disabled} : {}}
 			value={props.value}
 			onBlur={(e) => {
 				if (!props.onBlur) return;
@@ -1004,6 +1130,16 @@ function Container (props) {
 	const [showSettings, setShowSettings] = React.useState(false);
 	const refresh = React.useRef(false);
 	
+	React.useEffect(() => {
+		const onRefresh = (event) => {
+			refresh.current([event.detail.url]);
+		};
+		document.addEventListener('plugin-market-refresh', onRefresh);
+		return () => {
+			document.removeEventListener('plugin-market-refresh', onRefresh);
+		};
+	}, []);
+
 	return (
 		<div className="plugin-market-root">
 			{showSettings && <Settings closeSettings={() => setShowSettings(false)} refresh={refresh}/>}
@@ -1013,6 +1149,7 @@ function Container (props) {
 }
 plugin.onConfig((tools) => {
 	let dom = document.createElement('div');
+
 	ReactDOM.render(<Container />, dom);
 	return dom;
 });

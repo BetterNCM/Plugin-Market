@@ -109,7 +109,8 @@ export const loadOnlinePlugins = async (updatedUrls = undefined) => {
 	// or else, only the urls in updatedUrls will be requested
 
 	let urls = [getBaseURL()];
-	urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')));
+	urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
+	urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
 
 	const responses = await Promise.all(urls.map(url => 
 		requestPluginsFromUrl(
