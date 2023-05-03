@@ -894,6 +894,33 @@ function Settings(props) {
 		};
 	}, []);
 
+	const [customSourceUnlocked, setCustomSourceUnlocked] = React.useState(getSetting('custom-source-unlocked', false));
+	const konamiSeq = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+	const currentIndex = React.useRef(0);
+	React.useEffect(() => {
+		if (customSourceUnlocked) {
+			return;
+		}
+		const onKeyDown = (e) => {
+			if (e.keyCode === konamiSeq[currentIndex.current]) {
+				currentIndex.current++;
+				if (currentIndex.current === konamiSeq.length) {
+					setCustomSourceUnlocked(true);
+					setSetting('custom-source-unlocked', true);
+					props.refresh.current();
+				}
+			} else {
+				currentIndex.current = 0;
+			}
+		}
+		document.addEventListener('keydown', onKeyDown);
+		return () => {
+			document.removeEventListener('keydown', onKeyDown);
+		}
+	}, [customSourceUnlocked]);
+
+	const _source = (source === 'custom') ? (customSourceUnlocked ? 'custom' : 'gitee') : source;
+
 	return (
 		<div className="plugin-market-settings-container">
 			<div className="plugin-market-settings">
@@ -909,7 +936,7 @@ function Settings(props) {
 						<div className="plugin-market-settings-item-content">
 							<div class="plugin-market-settings-radio">
 								<label>
-									<input type="radio" name="radio" checked={source === 'gitee'} onChange={() => {
+									<input type="radio" name="radio" checked={_source === 'gitee'} onChange={() => {
 										setSource('gitee');
 										setSetting('source', 'gitee');
 										props.refresh.current([getBaseURL()]);
@@ -917,7 +944,7 @@ function Settings(props) {
 									<span>Gitee</span>
 								</label>
 								<label>
-									<input type="radio" name="radio" checked={source === 'github_usercontent'} onChange={() => {
+									<input type="radio" name="radio" checked={_source === 'github_usercontent'} onChange={() => {
 										setSource('github_usercontent');
 										setSetting('source', 'github_usercontent');
 										props.refresh.current([getBaseURL()]);
@@ -925,7 +952,7 @@ function Settings(props) {
 									<span>Github (UserContent)</span>
 								</label>
 								<label>
-									<input type="radio" name="radio" checked={source === 'github_raw'} onChange={() => {
+									<input type="radio" name="radio" checked={_source === 'github_raw'} onChange={() => {
 										setSource('github_raw');
 										setSetting('source', 'github_raw');
 										props.refresh.current([getBaseURL()]);
@@ -933,7 +960,7 @@ function Settings(props) {
 									<span>Github (Raw)</span>
 								</label>
 								<label>
-									<input type="radio" name="radio" checked={source === 'custom'} onChange={() => {
+									<input type="radio" name="radio" checked={_source === 'custom'} onChange={() => {
 										setSource('custom');
 										setSetting('source', 'custom');
 										props.refresh.current([getBaseURL()]);
@@ -942,7 +969,7 @@ function Settings(props) {
 								</label>
 							</div>
 							{
-								source === 'custom' && (
+								_source === 'custom' && (
 									<div className="plugin-market-settings-input plugin-market-settings-item-custom-source">
 										<input
 											className={`
@@ -977,83 +1004,87 @@ function Settings(props) {
 						</div>
 					</div>
 
-					<div className="plugin-market-settings-item">
-						<div className="plugin-market-settings-item-title">附加源</div>
-						<div className="plugin-market-settings-item-content">
-							<div class="plugin-market-settings-additional-sources">
-								{
-									additionalSources.map((source, index) => (
-										<div className="plugin-market-settings-additional-source-item">
-											<div class="plugin-market-settings-input">
-												<UrlInput
-													className="plugin-market-settings-additional-source-input"
-													placeholder="附加源地址"
-													value={source}
-													onBlur={(e, valueChanged) => {
-														if (e.target.value.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) && !e.target.value.endsWith('/')) {
-															e.target.value += '/';
-														}
+					{
+						customSourceUnlocked && (
+							<div className="plugin-market-settings-item">
+								<div className="plugin-market-settings-item-title">附加源</div>
+								<div className="plugin-market-settings-item-content">
+									<div class="plugin-market-settings-additional-sources">
+										{
+											additionalSources.map((source, index) => (
+												<div className="plugin-market-settings-additional-source-item">
+													<div class="plugin-market-settings-input">
+														<UrlInput
+															className="plugin-market-settings-additional-source-input"
+															placeholder="附加源地址"
+															value={source}
+															onBlur={(e, valueChanged) => {
+																if (e.target.value.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) && !e.target.value.endsWith('/')) {
+																	e.target.value += '/';
+																}
+																const newAdditionalSources = [...additionalSources];
+																newAdditionalSources[index] = e.target.value;
+																additionalSourcesChanged(newAdditionalSources);
+																if (valueChanged) {
+																	props.refresh.current([e.target.value]);
+																}
+															}}
+															onChange={(e) => {
+																const newAdditionalSources = [...additionalSources];
+																newAdditionalSources[index] = e.target.value;
+																setAdditionalSources(newAdditionalSources);
+															}}
+														/>
+													</div>
+													<button
+														className="plugin-market-settings-additional-source-move-up" 
+														disabled={index === 0}
+														onClick={() => {
+															const newAdditionalSources = [...additionalSources];
+															const temp = newAdditionalSources[index];
+															newAdditionalSources[index] = newAdditionalSources[index - 1];
+															newAdditionalSources[index - 1] = temp;
+															additionalSourcesChanged(newAdditionalSources);
+															props.refresh.current([]);
+														}}>
+															<Icon name="move_up"/>
+													</button>
+													<button 
+														className="plugin-market-settings-additional-source-move-down"
+														disabled={index === additionalSources.length - 1}
+														onClick={() => {
+															const newAdditionalSources = [...additionalSources];
+															const temp = newAdditionalSources[index];
+															newAdditionalSources[index] = newAdditionalSources[index + 1];
+															newAdditionalSources[index + 1] = temp;
+															additionalSourcesChanged(newAdditionalSources);
+															props.refresh.current([]);
+														}}>
+															<Icon name="move_down"/>
+													</button>
+													<button className="plugin-market-settings-additional-source-remove" onClick={() => {
 														const newAdditionalSources = [...additionalSources];
-														newAdditionalSources[index] = e.target.value;
+														newAdditionalSources.splice(index, 1);
 														additionalSourcesChanged(newAdditionalSources);
-														if (valueChanged) {
-															props.refresh.current([e.target.value]);
-														}
-													}}
-													onChange={(e) => {
-														const newAdditionalSources = [...additionalSources];
-														newAdditionalSources[index] = e.target.value;
-														setAdditionalSources(newAdditionalSources);
-													}}
-												/>
-											</div>
-											<button
-												className="plugin-market-settings-additional-source-move-up" 
-												disabled={index === 0}
-												onClick={() => {
-													const newAdditionalSources = [...additionalSources];
-													const temp = newAdditionalSources[index];
-													newAdditionalSources[index] = newAdditionalSources[index - 1];
-													newAdditionalSources[index - 1] = temp;
-													additionalSourcesChanged(newAdditionalSources);
-													props.refresh.current([]);
-												}}>
-													<Icon name="move_up"/>
-											</button>
-											<button 
-												className="plugin-market-settings-additional-source-move-down"
-												disabled={index === additionalSources.length - 1}
-												onClick={() => {
-													const newAdditionalSources = [...additionalSources];
-													const temp = newAdditionalSources[index];
-													newAdditionalSources[index] = newAdditionalSources[index + 1];
-													newAdditionalSources[index + 1] = temp;
-													additionalSourcesChanged(newAdditionalSources);
-													props.refresh.current([]);
-												}}>
-													<Icon name="move_down"/>
-											</button>
-											<button className="plugin-market-settings-additional-source-remove" onClick={() => {
-												const newAdditionalSources = [...additionalSources];
-												newAdditionalSources.splice(index, 1);
-												additionalSourcesChanged(newAdditionalSources);
-												props.refresh.current([]);
-											}
-											}><Icon name="close"/></button>
-										</div>
-									))
-								}
-								<button className="plugin-market-settings-additional-source-add" onClick={() => {
-									const newAdditionalSources = [...additionalSources];
-									newAdditionalSources.push('');
-									additionalSourcesChanged(newAdditionalSources);
-								}}><Icon name="add"/> 添加</button>
+														props.refresh.current([]);
+													}
+													}><Icon name="close"/></button>
+												</div>
+											))
+										}
+										<button className="plugin-market-settings-additional-source-add" onClick={() => {
+											const newAdditionalSources = [...additionalSources];
+											newAdditionalSources.push('');
+											additionalSourcesChanged(newAdditionalSources);
+										}}><Icon name="add"/> 添加</button>
+									</div>
+								</div>
 							</div>
-						</div>
-					</div>
+						)
+					}
 					
 					{
-						temporaryAdditionalSources?.length > 0 && (
+						temporaryAdditionalSources?.length > 0 && customSourceUnlocked && (
 							<div className="plugin-market-settings-item">
 								<div className="plugin-market-settings-item-title">由插件添加的源</div>
 								<div className="plugin-market-settings-item-content">

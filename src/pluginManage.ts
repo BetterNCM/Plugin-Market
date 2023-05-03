@@ -4,14 +4,16 @@ import { incPluginDownload } from "./analyze";
 import { getSetting, setSetting } from './utils';
 
 export const getBaseURL = () => {
-	const option = getSetting('source', 'gitee');
-	if (option === 'gitee') {
+	const source = getSetting('source', 'gitee');
+	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked', false) ? 'custom' : 'gitee') : source;
+
+	if (_source === 'gitee') {
 		return "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
-	} else if (option === 'github_usercontent') {
+	} else if (_source === 'github_usercontent') {
 		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
-	} else if (option === 'github_raw') {
+	} else if (_source === 'github_raw') {
 		return "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/";
-	} else if (option === 'custom') {
+	} else if (_source === 'custom') {
 		return getSetting('custom-source', '');
 	}
 }
@@ -109,8 +111,10 @@ export const loadOnlinePlugins = async (updatedUrls = undefined) => {
 	// or else, only the urls in updatedUrls will be requested
 
 	let urls = [getBaseURL()];
-	urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
-	urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
+	if (getSetting('custom-source-unlocked', false)) {
+		urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
+		urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
+	}
 
 	const responses = await Promise.all(urls.map(url => 
 		requestPluginsFromUrl(
