@@ -5,6 +5,7 @@ import { installPlugin, getDependencies, deletePlugin, loadOnlinePlugins, getBas
 import { formatNumber, formatShortTime, getSetting, setSetting, useRefState } from './utils';
 import { Flipper, Flipped } from "react-flip-toolkit";
 import './styles.scss'
+import './remover.js'
 
 import selfManifest from './manifest.json';
 
@@ -894,7 +895,7 @@ function Settings(props) {
 		};
 	}, []);
 
-	const [customSourceUnlocked, setCustomSourceUnlocked] = React.useState(getSetting('custom-source-unlocked', false));
+	const [customSourceUnlocked, setCustomSourceUnlocked] = React.useState(getSetting('custom-source-unlocked-1', false));
 	const konamiSeq = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 	const currentIndex = React.useRef(0);
 	React.useEffect(() => {
@@ -906,7 +907,7 @@ function Settings(props) {
 				currentIndex.current++;
 				if (currentIndex.current === konamiSeq.length) {
 					setCustomSourceUnlocked(true);
-					setSetting('custom-source-unlocked', true);
+					setSetting('custom-source-unlocked-1', true);
 					props.refresh.current();
 				}
 			} else {

@@ -5,6 +5,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const copyWebpackPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require('terser-webpack-plugin');
 
+const WebpackObfuscator = require('webpack-obfuscator');
+
 const isProduction = process.env.NODE_ENV == 'production';
 
 
@@ -25,6 +27,14 @@ const config = {
         /*new HtmlWebpackPlugin({
             template: 'index.html',
         }),*/
+        new WebpackObfuscator ({
+            stringArray: true,
+            stringArrayCallsTransform: true,
+            stringArrayEncoding: ['base64'],
+            stringArrayThreshold: 1,
+            transformObjectKeys: true,
+            unicodeEscapeSequence: false
+        }, []),
         new copyWebpackPlugin({
             patterns: [
                 {
@@ -76,6 +86,11 @@ const config = {
     },
     optimization: {
         minimizer: [new TerserPlugin({
+            terserOptions: {
+              format: {
+                comments: false,
+              },
+            },
             extractComments: false,
         })],
     },

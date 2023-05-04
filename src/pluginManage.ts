@@ -5,7 +5,7 @@ import { getSetting, setSetting } from './utils';
 
 export const getBaseURL = () => {
 	const source = getSetting('source', 'gitee');
-	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked', false) ? 'custom' : 'gitee') : source;
+	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitee') : source;
 
 	if (_source === 'gitee') {
 		return "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
@@ -111,7 +111,7 @@ export const loadOnlinePlugins = async (updatedUrls = undefined) => {
 	// or else, only the urls in updatedUrls will be requested
 
 	let urls = [getBaseURL()];
-	if (getSetting('custom-source-unlocked', false)) {
+	if (getSetting('custom-source-unlocked-1', false)) {
 		urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
 		urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
 	}
