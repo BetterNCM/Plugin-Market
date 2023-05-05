@@ -1,4 +1,5 @@
 import { deletePlugin } from './pluginManage';
+import { getSetting } from './utils';
 
 plugin.onAllPluginsLoaded(async () => {
 	if (getSetting('custom-source-unlocked-1', false)) return;
