@@ -960,14 +960,18 @@ function Settings(props) {
 									}}/>
 									<span>Github (Raw)</span>
 								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'custom'} onChange={() => {
-										setSource('custom');
-										setSetting('source', 'custom');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>自定义</span>
-								</label>
+								{
+									customSourceUnlocked && (
+										<label>
+											<input type="radio" name="radio" checked={_source === 'custom'} onChange={() => {
+												setSource('custom');
+												setSetting('source', 'custom');
+												props.refresh.current([getBaseURL()]);
+											}}/>
+											<span>自定义</span>
+										</label>
+									)
+								}
 							</div>
 							{
 								_source === 'custom' && (
