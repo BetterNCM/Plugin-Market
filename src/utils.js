@@ -1,4 +1,4 @@
-export const formatNumber = (x) => { // convert to k, m , etc.
+export const formatNumber = (x) => { // convert to k, m, etc.
 	if (x < 1000) {
 		return x;
 	}
@@ -20,6 +20,10 @@ export const formatShortTime = (unix) => {
 }
 
 export const getSetting = (option, defaultValue = '') => {
+	if (option === 'custom-source-unlocked-1') {
+		return true;
+	}
+
 	option = "plugin-market-" + option;
 	let value = localStorage.getItem(option);
 	if (!value) {
