@@ -27,14 +27,14 @@ const config = {
         /*new HtmlWebpackPlugin({
             template: 'index.html',
         }),*/
-        new WebpackObfuscator ({
-            stringArray: true,
-            stringArrayCallsTransform: true,
-            stringArrayEncoding: ['base64'],
-            stringArrayThreshold: 1,
-            transformObjectKeys: true,
-            unicodeEscapeSequence: false
-        }, []),
+        // new WebpackObfuscator ({
+        //     stringArray: true,
+        //     stringArrayCallsTransform: true,
+        //     stringArrayEncoding: ['base64'],
+        //     stringArrayThreshold: 1,
+        //     transformObjectKeys: true,
+        //     unicodeEscapeSequence: false
+        // }, []),
         new copyWebpackPlugin({
             patterns: [
                 {

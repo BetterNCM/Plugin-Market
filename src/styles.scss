@@ -8,6 +8,7 @@
     .plugin-market-filter-category {
         flex: 1;
         button {
+            color: inherit;
             background: transparent;
             border: none;
             font-size: 18px;
@@ -67,21 +68,25 @@
         align-items: center;
         > button {
             border: 1px solid #ffffff22;
-            background: transparent;
+            opacity: 0.7;
             padding-left: 15px;
             padding-right: 15px;
             height: 30px;
             position: relative;
             transition: background .25s ease;
             &:hover {
-                background: #ffffff11;
+                opacity: 0.8;
             }
             &.active {
                 background: #ec4141;
+                opacity: 1;
+                svg{
+                    fill: #ddd;
+                }
             }
             svg {
                 width: 18px;
-                fill: #ddd;
+                fill: #ec4141d3;
                 transition: transform .25s ease;
             }
             &.active svg {

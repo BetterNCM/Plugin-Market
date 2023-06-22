@@ -262,13 +262,17 @@ class PluginList extends React.Component {
 				</div>
 			</div>;
 		}
+		const is3xx = betterncm.ncm.getNCMVersion().split('.')[0] === '3';
 
 		const filteredPlugins = this.state.onlinePlugins
 			.filter(
 				plugin => {
 					if (plugin.deprecated || plugin.hide) return false;
-					if (!plugin.betterncm_version) return true;
-					return satisfies(currentBetterNCMVersion, plugin.betterncm_version) || this.state.showVersionUnmatchedPlugins;
+					if (!plugin.betterncm_version && !is3xx) return true;
+					return (
+						satisfies(currentBetterNCMVersion, plugin.betterncm_version || "0.0.0") && 
+						(!is3xx /*not 3.x.x*/ || plugin['ncm3-compatible'])
+						) || this.state.showVersionUnmatchedPlugins;
 				}
 			)
 			.filter(
