@@ -949,6 +949,14 @@ function Settings(props) {
 									<span>Gitee</span>
 								</label>
 								<label>
+									<input type="radio" name="radio" checked={_source === 'gitee'} onChange={() => {
+										setSource('ghproxy');
+										setSetting('source', 'ghproxy');
+										props.refresh.current([getBaseURL()]);
+									}}/>
+									<span>GhProxy</span>
+								</label>
+								<label>
 									<input type="radio" name="radio" checked={_source === 'github_usercontent'} onChange={() => {
 										setSource('github_usercontent');
 										setSetting('source', 'github_usercontent');

@@ -8,8 +8,10 @@ export const getBaseURL = () => {
 	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitee') : source;
 
 	if (_source === 'gitee') {
-		return "https://gitee.com/microblock/BetterNCMPluginsMarketData/raw/master/";
-	} else if (_source === 'github_usercontent') {
+		return "https://gitee.com/microblock/volartary/raw/master/";
+	} else if (_source === 'ghproxy') {
+		return "https://ghproxy.net/https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
+	}else if (_source === 'github_usercontent') {
 		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
 	} else if (_source === 'github_raw') {
 		return "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/";

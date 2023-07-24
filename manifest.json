@@ -1,7 +1,7 @@
 {
     "manifest_version": 1,
-    "name": "PluginMarket",
-    "version": "0.6.8",
+    "name": "PluginMarket1",
+    "version": "0.6.7",
     "author": "BetterNCM",
     "hide": true,
     "force-install": true,
