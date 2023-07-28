@@ -11,6 +11,8 @@ export const getBaseURL = () => {
 		return "https://gitee.com/microblock/volartary/raw/master/";
 	} else if (_source === 'ghproxy') {
 		return "https://ghproxy.net/https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
+	} else if (_source === 'npmmirror') {
+		return "https://registry.npmmirror.com/betterncm-packed-plugins/latest/files/";
 	}else if (_source === 'github_usercontent') {
 		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
 	} else if (_source === 'github_raw') {

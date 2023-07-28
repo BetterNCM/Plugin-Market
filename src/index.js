@@ -957,6 +957,14 @@ function Settings(props) {
 									<span>GhProxy</span>
 								</label>
 								<label>
+									<input type="radio" name="radio" checked={_source === 'npmmirror'} onChange={() => {
+										setSource('npmmirror');
+										setSetting('source', 'npmirror');
+										props.refresh.current([getBaseURL()]);
+									}}/>
+									<span>Npmmirror</span>
+								</label>
+								<label>
 									<input type="radio" name="radio" checked={_source === 'github_usercontent'} onChange={() => {
 										setSource('github_usercontent');
 										setSetting('source', 'github_usercontent');
