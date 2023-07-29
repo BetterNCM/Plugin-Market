@@ -949,7 +949,7 @@ function Settings(props) {
 									<span>Gitee</span>
 								</label>
 								<label>
-									<input type="radio" name="radio" checked={_source === 'gitee'} onChange={() => {
+									<input type="radio" name="radio" checked={_source === 'ghproxy'} onChange={() => {
 										setSource('ghproxy');
 										setSetting('source', 'ghproxy');
 										props.refresh.current([getBaseURL()]);
@@ -959,10 +959,10 @@ function Settings(props) {
 								<label>
 									<input type="radio" name="radio" checked={_source === 'npmmirror'} onChange={() => {
 										setSource('npmmirror');
-										setSetting('source', 'npmirror');
+										setSetting('source', 'npmmirror');
 										props.refresh.current([getBaseURL()]);
 									}}/>
-									<span>Npmmirror</span>
+									<span>npmmirror</span>
 								</label>
 								<label>
 									<input type="radio" name="radio" checked={_source === 'github_usercontent'} onChange={() => {
