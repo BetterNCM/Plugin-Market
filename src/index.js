@@ -868,10 +868,11 @@ class PluginItem extends React.Component {
 }
 
 function Settings(props) {
-	const [source, setSource] = React.useState(getSetting('source', 'gitee'));
+	const [source, setSource] = React.useState(getSetting('source', 'ghproxy'));
 	const [customSource, setCustomSource] = React.useState(getSetting('custom-source', ''));
 
 	React.useEffect(() => {
+		if(source !== 'npmmirror')
 		betterncm.app.writeConfig('cc.microblock.pluginmarket.source', getBaseURL());
 	}, [source, customSource]);
 
@@ -924,7 +925,7 @@ function Settings(props) {
 		}
 	}, [customSourceUnlocked]);
 
-	const _source = (source === 'custom') ? (customSourceUnlocked ? 'custom' : 'gitee') : source;
+	const _source = (source === 'custom') ? (customSourceUnlocked ? 'custom' : 'gitcode') : source;
 
 	return (
 		<div className="plugin-market-settings-container">
@@ -941,9 +942,17 @@ function Settings(props) {
 						<div className="plugin-market-settings-item-content">
 							<div class="plugin-market-settings-radio">
 								<label>
-									<input type="radio" name="radio" checked={_source === 'gitee'} onChange={() => {
-										setSource('gitee');
-										setSetting('source', 'gitee');
+									<input type="radio" name="radio" checked={_source === 'gitcode'} onChange={() => {
+										setSource('gitcode');
+										setSetting('source', 'gitcode');
+										props.refresh.current([getBaseURL()]);
+									}}/>
+									<span>GitCode</span>
+								</label>
+								<label>
+									<input type="radio" name="radio" checked={_source === 'gitee2'} onChange={() => {
+										setSource('gitee2');
+										setSetting('source', 'gitee2');
 										props.refresh.current([getBaseURL()]);
 									}}/>
 									<span>Gitee</span>

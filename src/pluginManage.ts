@@ -4,16 +4,20 @@ import { incPluginDownload } from "./analyze";
 import { getSetting, setSetting } from './utils';
 
 export const getBaseURL = () => {
-	const source = getSetting('source', 'gitee');
-	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitee') : source;
+	const source = getSetting('source', 'gitcode');
+	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitcode') : source;
 
-	if (_source === 'gitee') {
-		return "https://gitee.com/microblock/volartary/raw/master/";
-	} else if (_source === 'ghproxy') {
+	if (_source === 'gitee2') {
+		return "https://gitee.com/microblock/org/raw/master/";
+	}
+	else if (_source === 'gitcode' || _source === 'gitee') {
+		return "https://gitcode.net/qq_21551787/bncm-plugin-packed/-/raw/master/";
+	}
+	else if (_source === 'ghproxy') {
 		return "https://ghproxy.net/https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
 	} else if (_source === 'npmmirror') {
 		return "https://registry.npmmirror.com/betterncm-packed-plugins/latest/files/";
-	}else if (_source === 'github_usercontent') {
+	} else if (_source === 'github_usercontent') {
 		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
 	} else if (_source === 'github_raw') {
 		return "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/";
@@ -23,10 +27,10 @@ export const getBaseURL = () => {
 }
 
 export async function installPlugin(plugin, onlinePlugins) {
-    incPluginDownload(plugin.slug, plugin.version);
+	incPluginDownload(plugin.slug, plugin.version);
 
 	console.log(`正在安装插件 ${plugin.slug}...`);
-    
+
 	for (let requirement of (plugin.requirements ?? [])) {
 		//if (loadedPlugins[requirement]) continue;
 		console.log(requirement);
@@ -90,7 +94,7 @@ export const fetchAbortController = new class {
 	}
 	abort() {
 		this.controller.abort();
-		this.controller = new AbortController();		
+		this.controller = new AbortController();
 	}
 }
 
@@ -120,7 +124,7 @@ export const loadOnlinePlugins = async (updatedUrls = undefined) => {
 		urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
 	}
 
-	const responses = await Promise.all(urls.map(url => 
+	const responses = await Promise.all(urls.map(url =>
 		requestPluginsFromUrl(
 			url,
 			updatedUrls == undefined ? false : !updatedUrls.includes(url)
