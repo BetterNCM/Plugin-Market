@@ -6,11 +6,7 @@ import { getSetting, setSetting } from './utils';
 export const getBaseURL = () => {
 	const source = getSetting('source', 'gitcode');
 	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitcode') : source;
-
-	if (_source === 'gitee2') {
-		return "https://gitee.com/microblock/org/raw/master/";
-	}
-	else if (_source === 'gitcode' || _source === 'gitee') {
+	if (_source === 'gitcode' || _source === 'gitee' || _source === 'gitee2' || getSetting('custom-source', '').includes('gitee.com/microblock')) {
 		return "https://gitcode.net/qq_21551787/bncm-plugin-packed/-/raw/master/";
 	}
 	else if (_source === 'ghproxy') {

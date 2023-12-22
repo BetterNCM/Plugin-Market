@@ -332,24 +332,32 @@ class PluginList extends React.Component {
 				})() * (this.state.sort_order === 'asc' ? 1 : -1)
 			});
 
+		const filterOnClick = (category) => {
+			return e=>{
+				if (e.shiftKey) {
+					this.setState({
+						onlinePlugins: null,
+						pluginsAnalyzeData: {}
+					}, () => this.init());
+				}
+
+				if (this.state.category === category) {
+					this.setState({ category: 'all' });
+				} else {
+					this.setState({ category });
+				}
+			}
+		}
+
 		return (
 			<div>
 				<div className="plugin-market-filters">
-					<div className="plugin-market-filter-category">
-						<button className={this.state.category === 'all' ? 'active' : ''} onClick={(e) => {
-							if (e.shiftKey) {
-								this.setState({
-									onlinePlugins: null,
-									pluginsAnalyzeData: {}
-								}, () => this.init());
-							}
-							this.setState({ category: 'all' })
-						}}>全部</button>
-						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={() => this.setState({ category: 'extension' })}>扩展</button>
-						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={() => this.setState({ category: 'theme' })}>主题</button>
-						{this.state.showLibsTab && this.state.devOptions && <button className={this.state.category === 'lib' ? 'active' : ''} onClick={() => this.setState({ category: 'lib' })}>依赖库</button>}
-						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={() => this.setState({ category: 'installed' })}>已安装</button>}
-						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={() => this.setState({ category: 'update' })}>有更新</button>}
+					<div className={`plugin-market-filter-category`}>
+						<button className={this.state.category === 'extension' ? 'active' : ''} onClick={filterOnClick('extension')}>扩展</button>
+						<button className={this.state.category === 'theme' ? 'active' : ''} onClick={filterOnClick('theme')}>主题</button>
+						{this.state.showLibsTab && this.state.devOptions && <button className={this.state.category === 'lib' ? 'active' : ''} onClick={filterOnClick('lib')}>依赖库</button>}
+						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={filterOnClick('installed')}>已安装</button>}
+						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={filterOnClick('update')}>有更新</button>}
 						<button className='settings' onClick={() => this.props.openSettings()}><Icon name='settings'/></button>
 					</div>
 					<div className={`plugin-market-filter-search ${this.state.search ? 'filled' : ''}`}>
