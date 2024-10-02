@@ -1,25 +1,14 @@
 // @ts-nocheck
 
 import { incPluginDownload } from "./analyze";
+import { getOnlineSourcesCachedOrLocal } from "./online-sources";
 import { getSetting, setSetting } from './utils';
 
 export const getBaseURL = () => {
-	const source = getSetting('source', 'gitcode');
-	const _source = (source === 'custom') ? (getSetting('custom-source-unlocked-1', false) ? 'custom' : 'gitcode') : source;
-	if (_source === 'gitcode' || _source === 'gitee' || _source === 'gitee2' || getSetting('custom-source', '').includes('gitee.com/microblock')) {
-		return "https://gitcode.net/qq_21551787/bncm-plugin-packed/-/raw/master/";
-	}
-	else if (_source === 'ghproxy') {
-		return "https://ghproxy.net/https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
-	} else if (_source === 'npmmirror') {
-		return "https://registry.npmmirror.com/betterncm-packed-plugins/latest/files/";
-	} else if (_source === 'github_usercontent') {
-		return "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/";
-	} else if (_source === 'github_raw') {
-		return "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/";
-	} else if (_source === 'custom') {
-		return getSetting('custom-source', '');
-	}
+	const source = getSetting('source', 'Default');
+	const sources = getOnlineSourcesCachedOrLocal()
+	console.log('Source:', source, sources)
+	return sources.find(s => s.name === source).baseURL ?? sources[0].baseURL;
 }
 
 export async function installPlugin(plugin, onlinePlugins) {
@@ -178,7 +167,7 @@ export async function openDevFolder(plugin) {
 export function calcBonusDownloads(plugin, pluginsAnalyzeData) {
 	const maxDownloads = Math.max(...Object.values(pluginsAnalyzeData));
 
-	const turningPoint = 100; // hours
+	const turningPoint = 24 * 30 * 3; // hours
 	const turningValue = 0.85;
 
 	if (!plugin.publish_time) return 0;

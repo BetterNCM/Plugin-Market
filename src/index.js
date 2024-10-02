@@ -8,6 +8,7 @@ import './styles.scss'
 import './remover.js'
 
 import selfManifest from './manifest.json';
+import { getOnlineSourcesCachedOrLocal, usePluginSources } from './online-sources';
 
 const setConfig = (key, value) => {
 	localStorage.setItem(`pluginmarket-${key}`, JSON.stringify(value));
@@ -20,10 +21,7 @@ const getConfig = (key, defaultValue) => {
 	return JSON.parse(value);
 };
 
-plugin.onLoad(()=>{
-	plugin.mainPlugin.getMainSource = () => {
-		return getBaseURL();
-	};
+plugin.onLoad(() => {
 	plugin.mainPlugin.getAdditionalSources = () => {
 		return JSON.parse(getSetting('additional-sources', '[]'));
 	};
@@ -31,7 +29,7 @@ plugin.onLoad(()=>{
 		return window.pluginMarketTemporaryAdditionalSources ?? [];
 	};
 	plugin.mainPlugin.getAllSources = () => {
-		let urls = [getBaseURL()];
+		let urls = [getOnlineSourcesCachedOrLocal()[0].baseURL];
 		urls = urls.concat(JSON.parse(getSetting('additional-sources', '[]')).filter(url => urls.indexOf(url) === -1));
 		urls = urls.concat((window.pluginMarketTemporaryAdditionalSources ?? []).filter(url => urls.indexOf(url) === -1));
 		return urls;
@@ -56,9 +54,11 @@ plugin.onLoad(()=>{
 		}
 
 		setSetting('additional-sources', JSON.stringify(additionalSources));
-		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
-			url: url
-		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', {
+			detail: {
+				url: url
+			}
+		}));
 		document.dispatchEvent(new CustomEvent('plugin-market-refresh-additional-sources'));
 	};
 	plugin.mainPlugin.addTemporaryCustomSource = (url) => {
@@ -75,27 +75,31 @@ plugin.onLoad(()=>{
 		}
 		temporaryAdditionalSources.push(url);
 		window.pluginMarketTemporaryAdditionalSources = temporaryAdditionalSources;
-		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
-			url: url
-		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', {
+			detail: {
+				url: url
+			}
+		}));
 		document.dispatchEvent(new CustomEvent('plugin-market-refresh-temporary-additional-sources'));
 	};
 	plugin.mainPlugin.removeTemporaryCustomSource = (url) => {
 		if (!url.endsWith('/')) {
 			url += '/';
 		}
-		
+
 		const temporaryAdditionalSources = window.pluginMarketTemporaryAdditionalSources ?? [];
 		const newTemporaryAdditionalSources = temporaryAdditionalSources.filter((s) => s !== url);
 		window.pluginMarketTemporaryAdditionalSources = newTemporaryAdditionalSources;
 
-		document.dispatchEvent(new CustomEvent('plugin-market-refresh', { detail: {
-			url: null
-		}}));
+		document.dispatchEvent(new CustomEvent('plugin-market-refresh', {
+			detail: {
+				url: null
+			}
+		}));
 		document.dispatchEvent(new CustomEvent('plugin-market-refresh-temporary-additional-sources'));
 	};
 
-	betterncm.utils.waitForElement('#pri-skin-gride').then(ele=>{
+	betterncm.utils.waitForElement('#pri-skin-gride').then(ele => {
 		const onThemeUpdate = () => {
 			if (!document.querySelector("#skin_default, #skin_less").href.includes("skin.ls.css")) {
 				document.body.classList.add("ncm-light-theme");
@@ -107,7 +111,7 @@ plugin.onLoad(()=>{
 		new MutationObserver(() => {
 			onThemeUpdate();
 		}).observe(ele, { attributes: true });
-	});		
+	});
 });
 
 let currentBetterNCMVersion = await betterncm.app.getBetterNCMVersion();
@@ -158,15 +162,15 @@ class PluginList extends React.Component {
 				}).filter(plugin => !(plugin.deprecated || plugin.hide));
 				this.setState({ onlinePlugins });
 				this.updateNotificationBadge();
-		}).catch(
-			error => {
-				if (error.message == 'The user aborted a request.') return;
-				if (!getBaseURL().match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/)) {
-					error.message = '请检查插件源地址是否正确\n' + error.message;
+			}).catch(
+				error => {
+					if (error.message == 'The user aborted a request.') return;
+					if (!getBaseURL().match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/)) {
+						error.message = '请检查插件源地址是否正确\n' + error.message;
+					}
+					this.setState({ errorMsg: error.message });
 				}
-				this.setState({ errorMsg: error.message });
-			}
-		);
+			);
 		if (!reloadDownloads) return;
 		getPluginDownloads().then(
 			pluginsAnalyzeData => {
@@ -179,7 +183,7 @@ class PluginList extends React.Component {
 		);
 	}
 
-	updateNotificationBadge() {		
+	updateNotificationBadge() {
 		if (this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length) {
 			document.body.classList.add('plugins-have-update');
 		} else {
@@ -249,7 +253,7 @@ class PluginList extends React.Component {
 							this.props.openSettings();
 						}}>设置</button>
 					</div>
-						
+
 				</div>;
 			}
 			return <div className="plugin-market-container loading">
@@ -270,9 +274,9 @@ class PluginList extends React.Component {
 					if (plugin.deprecated || plugin.hide) return false;
 					if (!plugin.betterncm_version && !is3xx) return true;
 					return (
-						satisfies(currentBetterNCMVersion, plugin.betterncm_version || "0.0.0") && 
+						satisfies(currentBetterNCMVersion, plugin.betterncm_version || "0.0.0") &&
 						(!is3xx /*not 3.x.x*/ || plugin['ncm3-compatible'])
-						) || this.state.showVersionUnmatchedPlugins;
+					) || this.state.showVersionUnmatchedPlugins;
 				}
 			)
 			.filter(
@@ -310,7 +314,7 @@ class PluginList extends React.Component {
 							if (Object.keys(this.state.pluginsAnalyzeData).length !== 0) {
 								return (
 									((this.state.pluginsAnalyzeData[a.slug] ?? 0) + calcBonusDownloads(a, this.state.pluginsAnalyzeData))
-									- 
+									-
 									((this.state.pluginsAnalyzeData[b.slug] ?? 0) + calcBonusDownloads(b, this.state.pluginsAnalyzeData))
 								);
 							} else {
@@ -333,7 +337,7 @@ class PluginList extends React.Component {
 			});
 
 		const filterOnClick = (category) => {
-			return e=>{
+			return e => {
 				if (e.shiftKey) {
 					this.setState({
 						onlinePlugins: null,
@@ -358,7 +362,7 @@ class PluginList extends React.Component {
 						{this.state.showLibsTab && this.state.devOptions && <button className={this.state.category === 'lib' ? 'active' : ''} onClick={filterOnClick('lib')}>依赖库</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.installed).length > 0 && <button className={this.state.category === 'installed' ? 'active' : ''} onClick={filterOnClick('installed')}>已安装</button>}
 						{this.state.onlinePlugins.filter(plugin => plugin.hasUpdate).length > 0 && <button className={`has-update ${this.state.category === 'update' ? 'active' : ''}`} onClick={filterOnClick('update')}>有更新</button>}
-						<button className='settings' onClick={() => this.props.openSettings()}><Icon name='settings'/></button>
+						<button className='settings' onClick={() => this.props.openSettings()}><Icon name='settings' /></button>
 					</div>
 					<div className={`plugin-market-filter-search ${this.state.search ? 'filled' : ''}`}>
 						<Icon name="search" />
@@ -372,7 +376,7 @@ class PluginList extends React.Component {
 						<button title="名称" className={`${this.state.sort_by === 'name' ? 'active' : ''} ${this.state.sort_order}`} onClick={() => this.setSortBy('name')}><Icon name="atoz" /></button>
 					</div>
 				</div>
-    			<Flipper
+				<Flipper
 					flipKey={filteredPlugins.map(plugin => plugin.slug).join('')}
 					staggerConfig={{
 						default: {
@@ -385,34 +389,34 @@ class PluginList extends React.Component {
 					}}
 				>
 					<div className="plugin-market-container">
-							{
-								filteredPlugins.map((plugin) => {
-									return <React.Fragment key={plugin.slug}>
-										<Flipped
-											key={plugin.slug}
-											flipId={plugin.slug}
-											/*stagger*/
-											onAppear={(el, index) => {
-												el.animate([
-													{ opacity: 0, transform: 'scale(0.9)' },
-													{ opacity: 1, transform: 'scale(1)' }
-												], {
-													duration: 150,
-													easing: 'ease-out'
-												}).onfinish = () => el.style = '';
-											}}
-											onExit={(el, index, removeElement) => {
-												el.animate([
-													{ opacity: 1, transform: 'scale(1)' },
-													{ opacity: 0, transform: 'scale(0.9)' }
-												], {
-													duration: 150,
-													easing: 'ease-out'
-												}).onfinish = () => removeElement();
-											}}
-										>
-											{
-												flippedProps => 
+						{
+							filteredPlugins.map((plugin) => {
+								return <React.Fragment key={plugin.slug}>
+									<Flipped
+										key={plugin.slug}
+										flipId={plugin.slug}
+										/*stagger*/
+										onAppear={(el, index) => {
+											el.animate([
+												{ opacity: 0, transform: 'scale(0.9)' },
+												{ opacity: 1, transform: 'scale(1)' }
+											], {
+												duration: 150,
+												easing: 'ease-out'
+											}).onfinish = () => el.style = '';
+										}}
+										onExit={(el, index, removeElement) => {
+											el.animate([
+												{ opacity: 1, transform: 'scale(1)' },
+												{ opacity: 0, transform: 'scale(0.9)' }
+											], {
+												duration: 150,
+												easing: 'ease-out'
+											}).onfinish = () => removeElement();
+										}}
+									>
+										{
+											flippedProps =>
 												<PluginItem
 													key={plugin.slug}
 													downloads={this.state.pluginsAnalyzeData[plugin.slug] ?? 0}
@@ -426,21 +430,21 @@ class PluginList extends React.Component {
 													showBonusDownloads={this.state.showBonusDownloads}
 													flippedProps={flippedProps}
 												/>
-											}
-										</Flipped>
-									</React.Fragment>
-								})
-							}
+										}
+									</Flipped>
+								</React.Fragment>
+							})
+						}
 					</div>
 				</Flipper>
 				{
 					this.state.requireReload ?
 						<div className="reload-notice">
-							<div>插件的更改需要{ this.state.requireRestart ? '重启' : '重载' }以生效</div>
+							<div>插件的更改需要{this.state.requireRestart ? '重启' : '重载'}以生效</div>
 							<button onClick={async () => {
 								this.state.requireRestart ? await betterncm_native.app.restart() : await betterncm.app.reloadPlugins();
 								betterncm.reload()
-							}}><Icon name="reload" /> { this.state.requireRestart ? '重启' : '重载' }</button>
+							}}><Icon name="reload" /> {this.state.requireRestart ? '重启' : '重载'}</button>
 						</div>
 						: null
 				}
@@ -706,7 +710,7 @@ class PluginItem extends React.Component {
 					</button>
 				);
 			}
-			if (!this.isDev()){
+			if (!this.isDev()) {
 				buttons.push(
 					this.state.deleting ? (
 						<button className="plugin-action-button">
@@ -806,7 +810,7 @@ class PluginItem extends React.Component {
 								</span>
 
 								<span className="plugin-item-meta plugin-item-update-time" title={`最后更新时间 (${new Date(this.props.plugin.update_time * 1000).toLocaleString('zh-cn')})`}>
-									<Icon name="clock"/> {formatShortTime(this.props.plugin.update_time)}
+									<Icon name="clock" /> {formatShortTime(this.props.plugin.update_time)}
 								</span>
 
 								{
@@ -817,7 +821,7 @@ class PluginItem extends React.Component {
 								{
 									this.props.plugin.repo &&
 									<span className="plugin-item-meta plugin-github" title="Github">
-										<a onClick={async () => { await betterncm.app.exec(`https://github.com/${this.props.plugin.repo}`) }}><Icon name="github"/></a></span>
+										<a onClick={async () => { await betterncm.app.exec(`https://github.com/${this.props.plugin.repo}`) }}><Icon name="github" /></a></span>
 								}
 							</div>
 							{preview !== "unset" ? <div className="plugin-item-bg" style={{ 'backgroundImage': `url(${preview})` }} /> : null}
@@ -863,7 +867,7 @@ class PluginItem extends React.Component {
 					</div>
 				</div>
 				{
-					( showCompatibilityInfo ) &&
+					(showCompatibilityInfo) &&
 					<div className="plugin-item-compatibility-info">
 						{!this.canInstall() && <div class="plugin-item-incompatible-info">与 {this.incompatibleList().join('、')} 不兼容 </div>}
 						{this.beingDependedByList().length > 0 && <div class="plugin-item-dependency-info">被 {this.beingDependedByList().join('、')} 依赖</div>}
@@ -876,12 +880,14 @@ class PluginItem extends React.Component {
 }
 
 function Settings(props) {
-	const [source, setSource] = React.useState(getSetting('source', 'ghproxy'));
+	const [source, setSource] = React.useState(getSetting('source', 'Default'));
 	const [customSource, setCustomSource] = React.useState(getSetting('custom-source', ''));
 
+	const sources = usePluginSources()
+
 	React.useEffect(() => {
-		if(source !== 'npmmirror')
-		betterncm.app.writeConfig('cc.microblock.pluginmarket.source', getBaseURL());
+		if (sources.find(s => s.name === source)?.trustable)
+			betterncm.app.writeConfig('cc.microblock.pluginmarket.source', getBaseURL());
 	}, [source, customSource]);
 
 	const [additionalSources, setAdditionalSources, _additionalSources] = useRefState(JSON.parse(getSetting('additional-sources', '[]')));
@@ -890,7 +896,7 @@ function Settings(props) {
 		const filteredSources = changedAdditionalSources.filter((source) => source.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) !== null);
 		setSetting('additional-sources', JSON.stringify(filteredSources));
 	};
-	
+
 	const [temporaryAdditionalSources, setTemporaryAdditionalSources] = React.useState(window.pluginMarketTemporaryAdditionalSources ?? []);
 
 	React.useEffect(() => {
@@ -933,8 +939,20 @@ function Settings(props) {
 		}
 	}, [customSourceUnlocked]);
 
-	const _source = (source === 'custom') ? (customSourceUnlocked ? 'custom' : 'gitcode') : source;
+	const _source = (source === 'custom') ? (customSourceUnlocked ? 'custom' : 'default') : source;
 
+	const SourceLabel = ({ source }) => {
+		return <label>
+			<input type="radio" name="radio" checked={_source === source.name} onChange={() => {
+				setSource(source.name);
+				setSetting('source', source.name);
+				props.refresh.current([getBaseURL()]);
+			}} />
+			<span>{
+				source.displayName ?? source.name
+			}</span>
+		</label>
+	}
 	return (
 		<div className="plugin-market-settings-container">
 			<div className="plugin-market-settings">
@@ -942,107 +960,19 @@ function Settings(props) {
 					<div className="plugin-market-settings-title">设置</div>
 					<button className="plugin-market-settings-button" onClick={() => {
 						props.closeSettings();
-					}}><Icon name="close"/></button>
+					}}><Icon name="close" /></button>
 				</div>
 				<div className="plugin-market-settings-content">
 					<div className="plugin-market-settings-item">
 						<div className="plugin-market-settings-item-title">插件源</div>
 						<div className="plugin-market-settings-item-content">
 							<div class="plugin-market-settings-radio">
-								<label>
-									<input type="radio" name="radio" checked={_source === 'gitcode'} onChange={() => {
-										setSource('gitcode');
-										setSetting('source', 'gitcode');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>GitCode</span>
-								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'gitee2'} onChange={() => {
-										setSource('gitee2');
-										setSetting('source', 'gitee2');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>Gitee</span>
-								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'ghproxy'} onChange={() => {
-										setSource('ghproxy');
-										setSetting('source', 'ghproxy');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>GhProxy</span>
-								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'npmmirror'} onChange={() => {
-										setSource('npmmirror');
-										setSetting('source', 'npmmirror');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>npmmirror</span>
-								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'github_usercontent'} onChange={() => {
-										setSource('github_usercontent');
-										setSetting('source', 'github_usercontent');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>Github (UserContent)</span>
-								</label>
-								<label>
-									<input type="radio" name="radio" checked={_source === 'github_raw'} onChange={() => {
-										setSource('github_raw');
-										setSetting('source', 'github_raw');
-										props.refresh.current([getBaseURL()]);
-									}}/>
-									<span>Github (Raw)</span>
-								</label>
 								{
-									customSourceUnlocked && (
-										<label>
-											<input type="radio" name="radio" checked={_source === 'custom'} onChange={() => {
-												setSource('custom');
-												setSetting('source', 'custom');
-												props.refresh.current([getBaseURL()]);
-											}}/>
-											<span>自定义</span>
-										</label>
-									)
+									sources.map((source) => (
+										<SourceLabel source={source} />
+									))
 								}
 							</div>
-							{
-								_source === 'custom' && (
-									<div className="plugin-market-settings-input plugin-market-settings-item-custom-source">
-										<input
-											className={`
-												${customSource.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) ? 'valid' : 'invalid'}
-												${customSource === '' ? 'empty' : ''}
-											`}
-											type="text"
-											placeholder="自定义地址"
-											value={customSource}
-											onBlur={(e) => {
-												if (e.target.value.match(/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w-.,@?^=%&:/~+#]*[\w-@?^=%&/~+#])?$/) && !e.target.value.endsWith('/')) {
-													e.target.value += '/';
-												}
-												const oldCustomSource = getSetting('custom-source', '');
-												setCustomSource(e.target.value);
-												setSetting('custom-source', e.target.value);
-												if (oldCustomSource !== e.target.value) {
-													props.refresh.current();
-												}
-											}}
-											onChange={(e) => {
-												setCustomSource(e.target.value);
-											}}
-											onKeyDown={(e) => {
-												if (e.key === 'Enter') {
-													e.target.blur();
-												}
-											}}/>
-									</div>
-								)
-							}
 						</div>
 					</div>
 
@@ -1079,7 +1009,7 @@ function Settings(props) {
 														/>
 													</div>
 													<button
-														className="plugin-market-settings-additional-source-move-up" 
+														className="plugin-market-settings-additional-source-move-up"
 														disabled={index === 0}
 														onClick={() => {
 															const newAdditionalSources = [...additionalSources];
@@ -1089,9 +1019,9 @@ function Settings(props) {
 															additionalSourcesChanged(newAdditionalSources);
 															props.refresh.current([]);
 														}}>
-															<Icon name="move_up"/>
+														<Icon name="move_up" />
 													</button>
-													<button 
+													<button
 														className="plugin-market-settings-additional-source-move-down"
 														disabled={index === additionalSources.length - 1}
 														onClick={() => {
@@ -1102,7 +1032,7 @@ function Settings(props) {
 															additionalSourcesChanged(newAdditionalSources);
 															props.refresh.current([]);
 														}}>
-															<Icon name="move_down"/>
+														<Icon name="move_down" />
 													</button>
 													<button className="plugin-market-settings-additional-source-remove" onClick={() => {
 														const newAdditionalSources = [...additionalSources];
@@ -1110,7 +1040,7 @@ function Settings(props) {
 														additionalSourcesChanged(newAdditionalSources);
 														props.refresh.current([]);
 													}
-													}><Icon name="close"/></button>
+													}><Icon name="close" /></button>
 												</div>
 											))
 										}
@@ -1118,13 +1048,13 @@ function Settings(props) {
 											const newAdditionalSources = [...additionalSources];
 											newAdditionalSources.push('');
 											additionalSourcesChanged(newAdditionalSources);
-										}}><Icon name="add"/> 添加</button>
+										}}><Icon name="add" /> 添加</button>
 									</div>
 								</div>
 							</div>
 						)
 					}
-					
+
 					{
 						temporaryAdditionalSources?.length > 0 && customSourceUnlocked && (
 							<div className="plugin-market-settings-item">
@@ -1149,7 +1079,7 @@ function Settings(props) {
 														window.pluginMarketTemporaryAdditionalSources = newTemporaryAdditionalSources;
 														props.refresh.current([]);
 													}
-													}><Icon name="close"/></button>
+													}><Icon name="close" /></button>
 												</div>
 											))
 										}
@@ -1174,8 +1104,8 @@ function UrlInput(props) {
 				${url === '' ? 'empty' : ''}
 			`}
 			type="text"
-			{...props.placeholder ? {placeholder: props.placeholder} : {}}
-			{...props.disabled ? {disabled: props.disabled} : {}}
+			{...props.placeholder ? { placeholder: props.placeholder } : {}}
+			{...props.disabled ? { disabled: props.disabled } : {}}
 			value={props.value}
 			onBlur={(e) => {
 				if (!props.onBlur) return;
@@ -1199,10 +1129,10 @@ function UrlInput(props) {
 }
 
 
-function Container (props) {
+function Container(props) {
 	const [showSettings, setShowSettings] = React.useState(false);
 	const refresh = React.useRef(false);
-	
+
 	React.useEffect(() => {
 		const onRefresh = (event) => {
 			refresh.current([event.detail.url]);
@@ -1215,7 +1145,7 @@ function Container (props) {
 
 	return (
 		<div className="plugin-market-root">
-			{showSettings && <Settings closeSettings={() => setShowSettings(false)} refresh={refresh}/>}
+			{showSettings && <Settings closeSettings={() => setShowSettings(false)} refresh={refresh} />}
 			<PluginList openSettings={() => setShowSettings(true)} refresh={refresh} />
 		</div>
 	)

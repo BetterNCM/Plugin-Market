@@ -24,7 +24,7 @@ export const getSetting = (option, defaultValue = '') => {
 		return true;
 	}
 
-	option = "plugin-market-" + option;
+	option = "plugin-market-gen2-" + option;
 	let value = localStorage.getItem(option);
 	if (!value) {
 		value = defaultValue;
@@ -37,7 +37,7 @@ export const getSetting = (option, defaultValue = '') => {
 	return value;
 }
 export const setSetting = (option, value) => {
-	option = "plugin-market-" + option;
+	option = "plugin-market-gen2-" + option;
 	localStorage.setItem(option, value);
 }
 
