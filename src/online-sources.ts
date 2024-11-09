@@ -1,21 +1,30 @@
-const localSources = [{
-    name: 'Default',
-    displayName: '默认源',
-    baseURL: 'https://raw.gitcode.com/intensity/bncm-plugin-packed/raw/master/',
-    trustable: true
-}, {
-    name: 'Github (UserContent)',
-    baseURL: 'https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/',
-    trustable: true
-}, {
-    name: 'Github (Raw)',
-    baseURL: 'https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/',
-    trustable: true
-}, {
-    name: 'GitCode',
-    baseURL: 'https://raw.gitcode.com/intensity/bncm-plugin-packed/raw/master/',
-    trustable: true
-}]
+const localSources = [
+    {
+        "name": "Default",
+        "baseURL": "https://bncm-plugin.microblock.cc/",
+        "trustable": true
+    },
+    {
+        "name": "Unpkg",
+        "baseURL": "https://unpkg.com/betterncm-packed-plugins/plugins.json",
+        "trustable": true
+    },
+    {
+        "name": "Github (UserContent)",
+        "baseURL": "https://raw.githubusercontent.com/BetterNCM/BetterNCM-Packed-Plugins/master/",
+        "trustable": true
+    },
+    {
+        "name": "Github (Raw)",
+        "baseURL": "https://github.com/BetterNCM/BetterNCM-Packed-Plugins/raw/master/",
+        "trustable": true
+    },
+    {
+        "name": "MicroBlock (Cloudflare)",
+        "baseURL": "https://bncm-plugin.microblock.cc/",
+        "trustable": true
+    }
+]
 
 export type RemoteSource = typeof localSources[number]
 
@@ -42,7 +51,7 @@ export const usePluginSources: () => typeof localSources = () => {
     // @ts-ignore
     const [sources, setSources] = globalThis.React.useState(localSources)
     // @ts-ignore
-    globalThis.React.useState(() => {
+    globalThis.React.useEffect(() => {
         fetchOnlineSources().then(setSources)
     }, [])
     return sources
