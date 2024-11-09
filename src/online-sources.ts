@@ -6,7 +6,7 @@ const localSources = [
     },
     {
         "name": "Unpkg",
-        "baseURL": "https://unpkg.com/betterncm-packed-plugins/plugins.json",
+        "baseURL": "https://unpkg.com/betterncm-packed-plugins/",
         "trustable": true
     },
     {
