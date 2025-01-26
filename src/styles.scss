@@ -2,9 +2,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-right: 7px;
     margin-top: 10px;
     margin-bottom: 15px;
+    position: sticky;
+    top: -10px;
+    z-index: 100;
+    background: var(--container-bg);
+    border-radius: 8px;
+    padding: 5px 6px 5px 15px;
+    backdrop-filter: blur(10px);
 
     .plugin-market-filter-category {
         min-width: 250px;
@@ -26,7 +32,7 @@
                 position: absolute;
                 left: 50%;
                 right: 50%;
-                bottom: -10px;
+                bottom: -9px;
                 background: #ec4141;
                 height: 4px;
                 border-radius: 10px;
@@ -66,11 +72,9 @@
                 width: 16px;
                 height: 16px;
                 opacity: .5;
-                transform: translate(2px, 1px);
-
+                transform: translateY(1px);
                 position: absolute;
-                right: -12px;
-                top: 32px;
+                right: -31px;
             }
         }
     }
@@ -864,9 +868,10 @@ body.plugins-have-update {
 }
 
 .plugin-market-settings {
-    background: rgba(var(--contrast-rgb), 0.04);
+    background: var(--container-bg);
     border-radius: 8px;
     padding: 10px 15px;
+    backdrop-filter: blur(10px);
 
     .plugin-market-settings-header {
         font-size: 18px;
@@ -1076,6 +1081,7 @@ body.ncm-light-theme {
     .plugin-market-root {
         --contrast: #000;
         --contrast-rgb: 0, 0, 0;
+        --container-bg: #EEEA;
     }
 
     .plugin-market-filters .plugin-market-filter-sort>button {
@@ -1120,5 +1126,6 @@ body:not(.ncm-light-theme) {
     .plugin-market-root {
         --contrast: #fff;
         --contrast-rgb: 255, 255, 255;
+        --container-bg: #4446;
     }
 }
