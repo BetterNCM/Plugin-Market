@@ -2,9 +2,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-right: 7px;
     margin-top: 10px;
     margin-bottom: 15px;
+    position: sticky;
+    top: -10px;
+    z-index: 100;
+    background: rgba(var(--contrast-rgb), 0.04);
+    border-radius: 8px;
+    padding: 5px 6px 5px 15px;
+    backdrop-filter: blur(10px);
 
     .plugin-market-filter-category {
         min-width: 250px;
@@ -26,7 +32,7 @@
                 position: absolute;
                 left: 50%;
                 right: 50%;
-                bottom: -10px;
+                bottom: -9px;
                 background: #ec4141;
                 height: 4px;
                 border-radius: 10px;
@@ -867,6 +873,7 @@ body.plugins-have-update {
     background: rgba(var(--contrast-rgb), 0.04);
     border-radius: 8px;
     padding: 10px 15px;
+    backdrop-filter: blur(10px);
 
     .plugin-market-settings-header {
         font-size: 18px;
