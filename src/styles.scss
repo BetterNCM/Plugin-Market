@@ -7,7 +7,7 @@
     position: sticky;
     top: -10px;
     z-index: 100;
-    background: rgba(var(--contrast-rgb), 0.04);
+    background: var(--container-bg);
     border-radius: 8px;
     padding: 5px 6px 5px 15px;
     backdrop-filter: blur(10px);
@@ -868,7 +868,7 @@ body.plugins-have-update {
 }
 
 .plugin-market-settings {
-    background: rgba(var(--contrast-rgb), 0.04);
+    background: var(--container-bg);
     border-radius: 8px;
     padding: 10px 15px;
     backdrop-filter: blur(10px);
@@ -1081,6 +1081,7 @@ body.ncm-light-theme {
     .plugin-market-root {
         --contrast: #000;
         --contrast-rgb: 0, 0, 0;
+        --container-bg: #EEEA;
     }
 
     .plugin-market-filters .plugin-market-filter-sort>button {
@@ -1125,5 +1126,6 @@ body:not(.ncm-light-theme) {
     .plugin-market-root {
         --contrast: #fff;
         --contrast-rgb: 255, 255, 255;
+        --container-bg: #4446;
     }
 }
